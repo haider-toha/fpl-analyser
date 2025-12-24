@@ -1,0 +1,22 @@
+name: Keep Alive
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Backend
+        run: |
+          curl -fsS --retry 3 --retry-delay 5 https://fpl-analyser-backend.onrender.com/ || true
+          echo "Backend pinged at $(date)"
+
+      - name: Ping Frontend
+        run: |
+          curl -fsS --retry 3 --retry-delay 5 https://fpl-analyser-frontend.onrender.com/ || true
+          echo "Frontend pinged at $(date)"
+
