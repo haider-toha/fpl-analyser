@@ -8,7 +8,13 @@ interface StatCardProps {
   icon?: React.ReactNode;
 }
 
-export function StatCard({ label, value, subValue, color, icon }: StatCardProps) {
+export function StatCard({
+  label,
+  value,
+  subValue,
+  color,
+  icon,
+}: StatCardProps) {
   return (
     <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/30 transition-colors">
       <div className="flex items-start justify-between">
@@ -24,4 +30,3 @@ export function StatCard({ label, value, subValue, color, icon }: StatCardProps)
     </div>
   );
 }
-

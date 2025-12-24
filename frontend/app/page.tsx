@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { usePlayers } from "@/lib/hooks/usePlayers";
 import { Player } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { positionStyles, getFormStyle, getOwnershipStyle } from "@/lib/ui-utils";
+import {
+  positionStyles,
+  getFormStyle,
+  getOwnershipStyle,
+} from "@/lib/ui-utils";
 
 const positions = [
   { id: 0, name: "All" },
@@ -33,16 +37,14 @@ export default function PlayersPage() {
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.web_name.toLowerCase().includes(search.toLowerCase()) ||
-      p.team_name.toLowerCase().includes(search.toLowerCase())
+      p.team_name.toLowerCase().includes(search.toLowerCase()),
   );
 
   return (
     <div className="container py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Players
-        </h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Players</h1>
         <p className="text-muted-foreground mt-1">
           Browse and analyze Premier League players
         </p>
@@ -82,7 +84,7 @@ export default function PlayersPage() {
                 "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
                 position === p.id
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted",
               )}
             >
               {p.name}
@@ -96,9 +98,9 @@ export default function PlayersPage() {
           className="h-10 px-4 pr-10 rounded-lg border border-border bg-card text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary appearance-none cursor-pointer transition-all"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
-            backgroundPosition: 'right 0.5rem center',
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: '1.5em 1.5em'
+            backgroundPosition: "right 0.5rem center",
+            backgroundRepeat: "no-repeat",
+            backgroundSize: "1.5em 1.5em",
           }}
         >
           <option value="total_points">Sort by Points</option>
@@ -120,8 +122,16 @@ export default function PlayersPage() {
       {/* Error state */}
       {error && (
         <div className="p-4 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 text-sm mb-6 flex items-center gap-3">
-          <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          <svg
+            className="w-5 h-5 flex-shrink-0"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clipRule="evenodd"
+            />
           </svg>
           Failed to load players: {(error as Error).message}
         </div>
@@ -175,7 +185,7 @@ export default function PlayersPage() {
                 {filteredPlayers.map((player, idx) => {
                   const formStyle = getFormStyle(player.form);
                   const posStyle = positionStyles[player.position];
-                  
+
                   return (
                     <tr
                       key={player.id}
@@ -196,7 +206,7 @@ export default function PlayersPage() {
                           <div
                             className={cn(
                               "w-1 h-10 rounded-full flex-shrink-0",
-                              posStyle?.bg || "bg-muted"
+                              posStyle?.bg || "bg-muted",
                             )}
                           />
                           <div className="min-w-0">
@@ -238,7 +248,7 @@ export default function PlayersPage() {
                               "inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold border",
                               posStyle?.bg,
                               posStyle?.text,
-                              posStyle?.border
+                              posStyle?.border,
                             )}
                           >
                             {player.position_name}
@@ -265,14 +275,17 @@ export default function PlayersPage() {
                         <div className="flex items-center justify-end gap-3">
                           <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
                             <div
-                              className={cn("h-full rounded-full transition-all", formStyle.bg)}
+                              className={cn(
+                                "h-full rounded-full transition-all",
+                                formStyle.bg,
+                              )}
                               style={{ width: formStyle.width }}
                             />
                           </div>
                           <span
                             className={cn(
                               "font-bold tabular-nums min-w-[2.5rem] text-right",
-                              formStyle.text
+                              formStyle.text,
                             )}
                           >
                             {player.form}
@@ -285,7 +298,7 @@ export default function PlayersPage() {
                         <span
                           className={cn(
                             "font-medium tabular-nums",
-                            getOwnershipStyle(player.selected_by_percent)
+                            getOwnershipStyle(player.selected_by_percent),
                           )}
                         >
                           {player.selected_by_percent}%
@@ -313,7 +326,9 @@ export default function PlayersPage() {
                   d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              <p className="text-muted-foreground font-medium">No players found</p>
+              <p className="text-muted-foreground font-medium">
+                No players found
+              </p>
               <p className="text-sm text-muted-foreground/70 mt-1">
                 Try adjusting your search or filters
               </p>

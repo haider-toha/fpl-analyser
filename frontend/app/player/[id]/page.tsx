@@ -5,7 +5,11 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { PlayerDetail } from "@/lib/types";
-import { positionStyles, getFormColor, getDifficultyColor } from "@/lib/ui-utils";
+import {
+  positionStyles,
+  getFormColor,
+  getDifficultyColor,
+} from "@/lib/ui-utils";
 import { StatCard } from "@/components/ui/StatCard";
 import {
   XAxis,
@@ -23,7 +27,11 @@ export default function PlayerDetailPage() {
   const router = useRouter();
   const playerId = Number(params.id);
 
-  const { data: player, isLoading, error } = useQuery<PlayerDetail>({
+  const {
+    data: player,
+    isLoading,
+    error,
+  } = useQuery<PlayerDetail>({
     queryKey: ["player", playerId],
     queryFn: () => api.getPlayer<PlayerDetail>(playerId),
     enabled: !!playerId,
@@ -80,16 +88,14 @@ export default function PlayerDetailPage() {
   }
 
   const posStyle = positionStyles[player.position];
-  
+
   // Prepare chart data
-  const historyData = (player.history || [])
-    .slice(-10)
-    .map((h) => ({
-      gw: `GW${h.gameweek}`,
-      points: h.points,
-      minutes: h.minutes,
-      bps: h.bps,
-    }));
+  const historyData = (player.history || []).slice(-10).map((h) => ({
+    gw: `GW${h.gameweek}`,
+    points: h.points,
+    minutes: h.minutes,
+    bps: h.bps,
+  }));
 
   // Get upcoming fixtures (now properly structured from backend)
   const upcomingFixtures = (player.fixtures || []).slice(0, 5);
@@ -101,8 +107,18 @@ export default function PlayerDetailPage() {
         onClick={() => router.back()}
         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
         </svg>
         Back to Players
       </button>
@@ -112,10 +128,7 @@ export default function PlayerDetailPage() {
         <div className="flex items-center gap-4">
           {/* Position color indicator */}
           <div
-            className={cn(
-              "w-2 h-16 rounded-full",
-              posStyle?.bg || "bg-muted"
-            )}
+            className={cn("w-2 h-16 rounded-full", posStyle?.bg || "bg-muted")}
           />
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -125,7 +138,7 @@ export default function PlayerDetailPage() {
                   "px-3 py-1 rounded-full text-sm font-semibold border",
                   posStyle?.bg,
                   posStyle?.text,
-                  posStyle?.border
+                  posStyle?.border,
                 )}
               >
                 {player.position_name}
@@ -140,7 +153,11 @@ export default function PlayerDetailPage() {
             </div>
             {player.news && (
               <div className="flex items-center gap-2 mt-2 text-amber-500">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path
                     fillRule="evenodd"
                     d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -157,19 +174,25 @@ export default function PlayerDetailPage() {
         <div className="flex gap-6">
           <div className="text-center">
             <p className="text-4xl font-bold">{player.total_points}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Points</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+              Points
+            </p>
           </div>
           <div className="text-center">
             <p className={cn("text-4xl font-bold", getFormColor(player.form))}>
               {player.form}
             </p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">Form</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+              Form
+            </p>
           </div>
           <div className="text-center">
             <p className="text-4xl font-bold text-primary">
               {player.expected_points.toFixed(1)}
             </p>
-            <p className="text-xs text-muted-foreground uppercase tracking-wider">xPts</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">
+              xPts
+            </p>
           </div>
         </div>
       </div>
@@ -186,19 +209,13 @@ export default function PlayerDetailPage() {
           value={player.assists}
           subValue={`${player.xa.toFixed(2)} xA`}
         />
-        <StatCard
-          label="Clean Sheets"
-          value={player.clean_sheets}
-        />
+        <StatCard label="Clean Sheets" value={player.clean_sheets} />
         <StatCard
           label="Minutes"
           value={player.minutes.toLocaleString()}
           subValue={`${((player.minutes / (38 * 90)) * 100).toFixed(0)}% available`}
         />
-        <StatCard
-          label="Pts/Game"
-          value={player.points_per_game.toFixed(1)}
-        />
+        <StatCard label="Pts/Game" value={player.points_per_game.toFixed(1)} />
         <StatCard
           label="xGI"
           value={player.xgi.toFixed(2)}
@@ -215,9 +232,23 @@ export default function PlayerDetailPage() {
             <ResponsiveContainer width="100%" height={200}>
               <AreaChart data={historyData}>
                 <defs>
-                  <linearGradient id="pointsGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  <linearGradient
+                    id="pointsGradient"
+                    x1="0"
+                    y1="0"
+                    x2="0"
+                    y2="1"
+                  >
+                    <stop
+                      offset="5%"
+                      stopColor="hsl(var(--primary))"
+                      stopOpacity={0.3}
+                    />
+                    <stop
+                      offset="95%"
+                      stopColor="hsl(var(--primary))"
+                      stopOpacity={0}
+                    />
                   </linearGradient>
                 </defs>
                 <XAxis
@@ -307,14 +338,16 @@ export default function PlayerDetailPage() {
                 key={idx}
                 className="flex-shrink-0 min-w-[120px] bg-muted/50 border border-border rounded-lg p-4 text-center"
               >
-                <p className="text-xs text-muted-foreground mb-2">GW{fixture.gameweek}</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  GW{fixture.gameweek}
+                </p>
                 <p className="font-semibold mb-2">
                   {fixture.is_home ? "vs" : "@"} {fixture.team_name}
                 </p>
                 <div
                   className={cn(
                     "w-8 h-8 rounded-full flex items-center justify-center mx-auto text-white font-bold text-sm",
-                    getDifficultyColor(fixture.difficulty)
+                    getDifficultyColor(fixture.difficulty),
                   )}
                 >
                   {fixture.difficulty}
@@ -323,7 +356,9 @@ export default function PlayerDetailPage() {
             ))}
           </div>
         ) : (
-          <p className="text-muted-foreground">No upcoming fixtures available</p>
+          <p className="text-muted-foreground">
+            No upcoming fixtures available
+          </p>
         )}
       </div>
 
@@ -364,48 +399,58 @@ export default function PlayerDetailPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {player.history.slice(-10).reverse().map((h) => (
-                  <tr key={h.gameweek} className="hover:bg-muted/30 transition-colors">
-                    <td className="py-3 px-4 font-medium">GW{h.gameweek}</td>
-                    <td className="py-3 px-4 text-right font-bold tabular-nums">
-                      {h.points}
-                    </td>
-                    <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">
-                      {h.minutes}
-                    </td>
-                    <td className="py-3 px-4 text-right tabular-nums">
-                      {h.goals_scored > 0 ? (
-                        <span className="text-emerald-400">{h.goals_scored}</span>
-                      ) : (
-                        <span className="text-muted-foreground">0</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right tabular-nums">
-                      {h.assists > 0 ? (
-                        <span className="text-sky-400">{h.assists}</span>
-                      ) : (
-                        <span className="text-muted-foreground">0</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right tabular-nums">
-                      {h.clean_sheets > 0 ? (
-                        <span className="text-amber-400">{h.clean_sheets}</span>
-                      ) : (
-                        <span className="text-muted-foreground">0</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right tabular-nums">
-                      {h.bonus > 0 ? (
-                        <span className="text-purple-400">{h.bonus}</span>
-                      ) : (
-                        <span className="text-muted-foreground">0</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">
-                      {h.bps}
-                    </td>
-                  </tr>
-                ))}
+                {player.history
+                  .slice(-10)
+                  .reverse()
+                  .map((h) => (
+                    <tr
+                      key={h.gameweek}
+                      className="hover:bg-muted/30 transition-colors"
+                    >
+                      <td className="py-3 px-4 font-medium">GW{h.gameweek}</td>
+                      <td className="py-3 px-4 text-right font-bold tabular-nums">
+                        {h.points}
+                      </td>
+                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">
+                        {h.minutes}
+                      </td>
+                      <td className="py-3 px-4 text-right tabular-nums">
+                        {h.goals_scored > 0 ? (
+                          <span className="text-emerald-400">
+                            {h.goals_scored}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right tabular-nums">
+                        {h.assists > 0 ? (
+                          <span className="text-sky-400">{h.assists}</span>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right tabular-nums">
+                        {h.clean_sheets > 0 ? (
+                          <span className="text-amber-400">
+                            {h.clean_sheets}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right tabular-nums">
+                        {h.bonus > 0 ? (
+                          <span className="text-purple-400">{h.bonus}</span>
+                        ) : (
+                          <span className="text-muted-foreground">0</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right tabular-nums text-muted-foreground">
+                        {h.bps}
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
@@ -414,4 +459,3 @@ export default function PlayerDetailPage() {
     </div>
   );
 }
-

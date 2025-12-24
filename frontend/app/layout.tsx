@@ -5,7 +5,7 @@ import { Providers } from "./providers";
 import { Navigation } from "@/components/Navigation";
 import { Footer } from "@/components/Footer";
 
-const outfit = Outfit({ 
+const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-sans",
   display: "swap",
@@ -19,7 +19,8 @@ const firaCode = Fira_Code({
 
 export const metadata: Metadata = {
   title: "FPL Analyser by Haider",
-  description: "Advanced Fantasy Premier League analytics, AI-powered insights, and real-time tracking.",
+  description:
+    "Advanced Fantasy Premier League analytics, AI-powered insights, and real-time tracking.",
 };
 
 export default function RootLayout({

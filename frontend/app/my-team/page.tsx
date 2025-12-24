@@ -116,7 +116,7 @@ export default function MyTeamPage() {
               <h2 className="text-lg font-medium">{data.team_name}</h2>
               <p className="text-sm text-muted-foreground">{data.name}</p>
             </div>
-            
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wider">
@@ -193,7 +193,7 @@ export default function MyTeamPage() {
                         <span
                           className={cn(
                             "inline-flex px-2 py-0.5 rounded text-xs font-medium",
-                            positionStyles[player.position]
+                            positionStyles[player.position],
                           )}
                         >
                           {player.position_name}
@@ -234,13 +234,15 @@ export default function MyTeamPage() {
                         <span className="font-medium text-foreground">
                           {player.web_name}
                         </span>
-                        <span className="text-xs block">{player.team_name}</span>
+                        <span className="text-xs block">
+                          {player.team_name}
+                        </span>
                       </td>
                       <td>
                         <span
                           className={cn(
                             "inline-flex px-2 py-0.5 rounded text-xs font-medium opacity-60",
-                            positionStyles[player.position]
+                            positionStyles[player.position],
                           )}
                         >
                           {player.position_name}
@@ -249,9 +251,7 @@ export default function MyTeamPage() {
                       <td className="text-right tabular-nums">
                         {player.total_points}
                       </td>
-                      <td className="text-right tabular-nums">
-                        {player.form}
-                      </td>
+                      <td className="text-right tabular-nums">{player.form}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -261,7 +261,8 @@ export default function MyTeamPage() {
 
           {/* Bank */}
           <p className="text-sm text-muted-foreground">
-            Bank: £<span className="tabular-nums">{data.bank?.toFixed(1)}m</span>
+            Bank: £
+            <span className="tabular-nums">{data.bank?.toFixed(1)}m</span>
           </p>
         </div>
       )}

@@ -1,11 +1,26 @@
 // Shared UI utilities for consistent styling across the app
 
 // Position styling for player positions (1=GK, 2=DEF, 3=MID, 4=FWD)
-export const positionStyles: Record<number, { bg: string; text: string; border: string }> = {
-  1: { bg: "bg-amber-500/15", text: "text-amber-400", border: "border-amber-500/30" },
-  2: { bg: "bg-emerald-500/15", text: "text-emerald-400", border: "border-emerald-500/30" },
+export const positionStyles: Record<
+  number,
+  { bg: string; text: string; border: string }
+> = {
+  1: {
+    bg: "bg-amber-500/15",
+    text: "text-amber-400",
+    border: "border-amber-500/30",
+  },
+  2: {
+    bg: "bg-emerald-500/15",
+    text: "text-emerald-400",
+    border: "border-emerald-500/30",
+  },
   3: { bg: "bg-sky-500/15", text: "text-sky-400", border: "border-sky-500/30" },
-  4: { bg: "bg-rose-500/15", text: "text-rose-400", border: "border-rose-500/30" },
+  4: {
+    bg: "bg-rose-500/15",
+    text: "text-rose-400",
+    border: "border-rose-500/30",
+  },
 };
 
 export const positionLabels = ["", "GK", "DEF", "MID", "FWD"];
@@ -20,9 +35,14 @@ export function getFormColor(form: number): string {
 }
 
 // Form style with background and width for visual bars
-export function getFormStyle(form: number): { text: string; bg: string; width: string } {
-  const width = `${Math.min(form / 10 * 100, 100)}%`;
-  if (form >= 7) return { text: "text-emerald-400", bg: "bg-emerald-500", width };
+export function getFormStyle(form: number): {
+  text: string;
+  bg: string;
+  width: string;
+} {
+  const width = `${Math.min((form / 10) * 100, 100)}%`;
+  if (form >= 7)
+    return { text: "text-emerald-400", bg: "bg-emerald-500", width };
   if (form >= 5) return { text: "text-lime-400", bg: "bg-lime-500", width };
   if (form >= 3) return { text: "text-amber-400", bg: "bg-amber-500", width };
   if (form >= 1) return { text: "text-orange-400", bg: "bg-orange-500", width };
@@ -55,14 +75,29 @@ export function getOwnershipStyle(ownership: number): string {
 }
 
 // Rank impact styling
-export function getRankImpactStyle(impact: string): { bg: string; text: string; border: string } {
+export function getRankImpactStyle(impact: string): {
+  bg: string;
+  text: string;
+  border: string;
+} {
   switch (impact) {
     case "high":
-      return { bg: "bg-emerald-500/15", text: "text-emerald-400", border: "border-emerald-500/30" };
+      return {
+        bg: "bg-emerald-500/15",
+        text: "text-emerald-400",
+        border: "border-emerald-500/30",
+      };
     case "medium":
-      return { bg: "bg-amber-500/15", text: "text-amber-400", border: "border-amber-500/30" };
+      return {
+        bg: "bg-amber-500/15",
+        text: "text-amber-400",
+        border: "border-amber-500/30",
+      };
     default:
-      return { bg: "bg-muted", text: "text-muted-foreground", border: "border-border" };
+      return {
+        bg: "bg-muted",
+        text: "text-muted-foreground",
+        border: "border-border",
+      };
   }
 }
-

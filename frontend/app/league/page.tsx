@@ -76,7 +76,8 @@ export default function LeaguePage() {
           </button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">
-          Find your league ID in the URL when viewing your league on the FPL website
+          Find your league ID in the URL when viewing your league on the FPL
+          website
         </p>
       </form>
 
@@ -123,25 +124,37 @@ export default function LeaguePage() {
                     <tr key={entry.entry}>
                       <td className="text-center">
                         <div className="flex items-center justify-center gap-1.5">
-                          <span className={cn(
-                            "font-medium tabular-nums",
-                            idx === 0 && "text-primary"
-                          )}>
+                          <span
+                            className={cn(
+                              "font-medium tabular-nums",
+                              idx === 0 && "text-primary",
+                            )}
+                          >
                             {entry.rank}
                           </span>
                           {rankChange !== 0 && (
-                            <span className={cn(
-                              "text-2xs font-medium",
-                              rankChange > 0 ? "text-emerald-500" : "text-rose-500"
-                            )}>
-                              {rankChange > 0 ? `↑${rankChange}` : `↓${Math.abs(rankChange)}`}
+                            <span
+                              className={cn(
+                                "text-2xs font-medium",
+                                rankChange > 0
+                                  ? "text-emerald-500"
+                                  : "text-rose-500",
+                              )}
+                            >
+                              {rankChange > 0
+                                ? `↑${rankChange}`
+                                : `↓${Math.abs(rankChange)}`}
                             </span>
                           )}
                         </div>
                       </td>
                       <td className="font-medium">{entry.entry_name}</td>
-                      <td className="text-muted-foreground">{entry.player_name}</td>
-                      <td className="text-right tabular-nums">{entry.event_total}</td>
+                      <td className="text-muted-foreground">
+                        {entry.player_name}
+                      </td>
+                      <td className="text-right tabular-nums">
+                        {entry.event_total}
+                      </td>
                       <td className="text-right font-medium tabular-nums">
                         {entry.total}
                       </td>
@@ -150,7 +163,7 @@ export default function LeaguePage() {
                 })}
               </tbody>
             </table>
-            
+
             {standings.length === 0 && !isLoading && (
               <div className="p-12 text-center text-muted-foreground">
                 No standings found

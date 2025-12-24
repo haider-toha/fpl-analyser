@@ -52,10 +52,10 @@ class ApiClient {
 
   private async fetch<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -118,7 +118,10 @@ class ApiClient {
     return this.fetch<T>(`/api/live/gameweek/${gameweek}/fixtures`);
   }
 
-  async getManagerLiveScore<T = unknown>(managerId: number, gameweek?: number): Promise<T> {
+  async getManagerLiveScore<T = unknown>(
+    managerId: number,
+    gameweek?: number,
+  ): Promise<T> {
     const params = gameweek ? `?gameweek=${gameweek}` : "";
     return this.fetch<T>(`/api/live/manager/${managerId}/live${params}`);
   }
@@ -139,19 +142,29 @@ class ApiClient {
         searchParams.append(key, String(value));
       }
     });
-    return this.fetch<FixtureAnalysisResponse>(`/api/analytics/fixtures/analysis?${searchParams}`);
-  }
-
-  async getCaptainDifferentials(minExpected = 5.0, maxOwnership = 15.0): Promise<DifferentialsResponse> {
-    return this.fetch<DifferentialsResponse>(
-      `/api/analytics/differentials?min_expected=${minExpected}&max_ownership=${maxOwnership}`
+    return this.fetch<FixtureAnalysisResponse>(
+      `/api/analytics/fixtures/analysis?${searchParams}`,
     );
   }
 
-  async getVORRankings(numGameweeks = 1, position?: number): Promise<VORRankingsResponse> {
+  async getCaptainDifferentials(
+    minExpected = 5.0,
+    maxOwnership = 15.0,
+  ): Promise<DifferentialsResponse> {
+    return this.fetch<DifferentialsResponse>(
+      `/api/analytics/differentials?min_expected=${minExpected}&max_ownership=${maxOwnership}`,
+    );
+  }
+
+  async getVORRankings(
+    numGameweeks = 1,
+    position?: number,
+  ): Promise<VORRankingsResponse> {
     const params = new URLSearchParams({ num_gameweeks: String(numGameweeks) });
     if (position) params.append("position", String(position));
-    return this.fetch<VORRankingsResponse>(`/api/analytics/vor-rankings?${params}`);
+    return this.fetch<VORRankingsResponse>(
+      `/api/analytics/vor-rankings?${params}`,
+    );
   }
 
   async getChipStrategy(params: {
@@ -165,9 +178,13 @@ class ApiClient {
     });
   }
 
-  async getMatchPredictions(gameweek?: number): Promise<MatchPredictionsResponse> {
+  async getMatchPredictions(
+    gameweek?: number,
+  ): Promise<MatchPredictionsResponse> {
     const params = gameweek ? `?gameweek=${gameweek}` : "";
-    return this.fetch<MatchPredictionsResponse>(`/api/analytics/match-predictions${params}`);
+    return this.fetch<MatchPredictionsResponse>(
+      `/api/analytics/match-predictions${params}`,
+    );
   }
 }
 

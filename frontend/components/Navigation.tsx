@@ -22,8 +22,8 @@ export function Navigation() {
       <div className="container">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="flex items-center gap-3 hover:opacity-70 transition-opacity"
           >
             <div className="flex items-center gap-1.5">
@@ -49,7 +49,7 @@ export function Navigation() {
                     "relative px-4 py-1.5 text-[13px] transition-colors",
                     isActive
                       ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   <span className="flex items-center gap-1.5">
@@ -72,16 +72,26 @@ export function Navigation() {
             className="md:hidden p-2 -mr-2 rounded-md hover:bg-muted transition-colors"
             aria-label="Toggle menu"
           >
-            <svg 
+            <svg
               className="w-5 h-5 text-muted-foreground"
-              fill="none" 
-              stroke="currentColor" 
+              fill="none"
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
               {mobileMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               )}
             </svg>
           </button>
@@ -103,7 +113,7 @@ export function Navigation() {
                       "px-3 py-2 text-sm transition-colors rounded-md",
                       isActive
                         ? "text-foreground font-medium bg-muted"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
                     )}
                   >
                     <span className="flex items-center gap-1.5">
