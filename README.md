@@ -9,6 +9,7 @@ An advanced Fantasy Premier League analytics platform that combines machine lear
 - [Features](#features)
   - [Player Analysis](#player-analysis)
   - [Squad Optimization](#squad-optimization)
+  - [Transfer Predictions](#transfer-predictions)
   - [Monte Carlo Simulations](#monte-carlo-simulations)
   - [Live Gameweek Tracking](#live-gameweek-tracking)
   - [Mini-League Analytics](#mini-league-analytics)
@@ -103,6 +104,24 @@ The optimizer can solve several problems:
 - **Captain Selection**: Identify the player most likely to score the highest points, accounting for the 2x captain multiplier.
 
 The optimizer runs in under one second for typical problems, making it practical for interactive use.
+
+### Transfer Predictions
+
+The transfer predictions module provides multi-gameweek fixture analysis and data-driven transfer recommendations:
+
+- **Fixture Swing Analysis**: Identifies teams whose fixtures are improving or worsening over the planning horizon, highlighting opportunities to buy players from teams entering easy runs and sell players facing difficult schedules.
+
+- **Best Fixture Runs**: Ranks all Premier League teams by average fixture difficulty rating over the selected horizon (4, 6, 8, or 10 gameweeks), helping managers plan ahead.
+
+- **Transfer Recommendations**: Generates actionable transfer suggestions with urgency levels (immediate, soon, plan ahead), expected point gains, and detailed reasoning based on fixture context.
+
+- **Rotation Pairs**: Identifies player pairs at each position who complement each other's fixtures, enabling managers to rotate players effectively based on upcoming opponents.
+
+- **Fixture-Based Differentials**: Surfaces low-ownership players with favorable upcoming fixtures, providing differential opportunities that can help managers gain rank.
+
+- **Position-Based Top Picks**: Ranks the best goalkeeper, defender, midfielder, and forward options based on expected points over the planning horizon.
+
+The module uses a clean black and white design with orange accent charts for clear visual hierarchy.
 
 ### Monte Carlo Simulations
 
@@ -234,7 +253,7 @@ For multi-gameweek planning, fixture difficulty is aggregated and teams are rank
 
 | Technology | Purpose |
 |------------|---------|
-| Next.js 14 | React framework with server-side rendering |
+| Next.js 16 | React framework with server-side rendering |
 | React 18 | UI component library |
 | TypeScript | Type-safe JavaScript |
 | Tailwind CSS | Utility-first CSS framework |

@@ -1,6 +1,15 @@
-import { Player, VORRanking, MatchPrediction, ChipStrategy } from "./types";
+import {
+  Player,
+  VORRanking,
+  MatchPrediction,
+  ChipStrategy,
+  TransferPlan,
+  FixtureSwingAnalysis,
+  RotationPair,
+  DetailedPlayerProjection,
+} from "./types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 // Response types for API endpoints
 interface PlayersResponse {
@@ -184,6 +193,97 @@ class ApiClient {
     const params = gameweek ? `?gameweek=${gameweek}` : "";
     return this.fetch<MatchPredictionsResponse>(
       `/api/analytics/match-predictions${params}`,
+    );
+  }
+
+  // Transfer Planning
+  async getTransferPlan(params: {
+    squad_ids?: number[];
+    budget_remaining?: number;
+    free_transfers?: number;
+    horizon?: number;
+  }): Promise<TransferPlan> {
+    return this.fetch<TransferPlan>("/api/analytics/transfer-plan", {
+      method: "POST",
+      body: JSON.stringify({
+        squad_ids: params.squad_ids || [],
+        budget_remaining: params.budget_remaining || 0,
+        free_transfers: params.free_transfers || 1,
+        horizon: params.horizon || 6,
+      }),
+    });
+  }
+
+  async getPlayerProjections(
+    playerIds: number[],
+    horizon = 6,
+  ): Promise<{ projections: DetailedPlayerProjection[] }> {
+    return this.fetch<{ projections: DetailedPlayerProjection[] }>(
+      "/api/analytics/player-projections",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          player_ids: playerIds,
+          horizon,
+        }),
+      },
+    );
+  }
+
+  async getFixtureSwings(
+    horizon = 10,
+  ): Promise<{ teams: FixtureSwingAnalysis[] }> {
+    return this.fetch<{ teams: FixtureSwingAnalysis[] }>(
+      `/api/analytics/fixture-swings?horizon=${horizon}`,
+    );
+  }
+
+  async getRotationPairs(params: {
+    position: number;
+    budget_max?: number;
+    horizon?: number;
+  }): Promise<{ rotation_pairs: RotationPair[] }> {
+    return this.fetch<{ rotation_pairs: RotationPair[] }>(
+      "/api/analytics/rotation-pairs",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          position: params.position,
+          budget_max: params.budget_max || 10,
+          horizon: params.horizon || 6,
+        }),
+      },
+    );
+  }
+
+  async getFixtureBasedDifferentials(
+    maxOwnership = 10,
+    minForm = 3,
+    horizon = 6,
+  ): Promise<{
+    differentials: Array<{
+      id: number;
+      name: string;
+      team: string;
+      position: number;
+      price: number;
+      form: number;
+      fdr_avg: number;
+      expected_pts: number;
+      reasoning: string[];
+    }>;
+  }> {
+    return this.fetch(
+      `/api/analytics/differentials/by-fixtures?max_ownership=${maxOwnership}&min_form=${minForm}&horizon=${horizon}`,
+    );
+  }
+
+  async getTeamFixtureSwing(
+    teamId: number,
+    horizon = 10,
+  ): Promise<FixtureSwingAnalysis> {
+    return this.fetch<FixtureSwingAnalysis>(
+      `/api/analytics/team/${teamId}/fixture-swing?horizon=${horizon}`,
     );
   }
 }

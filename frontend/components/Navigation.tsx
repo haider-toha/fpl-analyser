@@ -5,8 +5,16 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+interface NavItem {
+  href: string;
+  label: string;
+  live?: boolean;
+  highlight?: boolean;
+}
+
+const navItems: NavItem[] = [
   { href: "/", label: "Players" },
+  { href: "/predictions", label: "Predictions", highlight: true },
   { href: "/my-team", label: "My Team" },
   { href: "/analytics", label: "Analytics" },
   { href: "/league", label: "League" },
@@ -56,6 +64,11 @@ export function Navigation() {
                     {item.label}
                     {item.live && (
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    )}
+                    {item.highlight && !isActive && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                        New
+                      </span>
                     )}
                   </span>
                   {isActive && (
@@ -120,6 +133,11 @@ export function Navigation() {
                       {item.label}
                       {item.live && (
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      )}
+                      {item.highlight && !isActive && (
+                        <span className="px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide rounded bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          New
+                        </span>
                       )}
                     </span>
                   </Link>

@@ -27,6 +27,11 @@ from app.ml.player_value import (
     TransferValueAnalyzer,
 )
 from app.ml.chip_strategy import ChipStrategyOptimizer
+from app.ml.transfer_planner import (
+    TransferPlanner,
+    PositionalPlanner,
+    DifferentialFinder,
+)
 
 router = APIRouter()
 
@@ -73,6 +78,27 @@ class ValuePicksRequest(BaseModel):
     budget: float = Field(default=100.0)
     existing_team_ids: list[int] = Field(default=[])
     position: Optional[int] = Field(default=None, description="1=GK, 2=DEF, 3=MID, 4=FWD")
+
+
+class TransferPlanRequest(BaseModel):
+    """Request for multi-gameweek transfer planning."""
+    squad_ids: list[int] = Field(default=[], description="Current squad player IDs (15 players)")
+    budget_remaining: float = Field(default=0.0, description="Bank balance in millions")
+    free_transfers: int = Field(default=1, ge=0, le=2)
+    horizon: int = Field(default=6, ge=1, le=10, description="Gameweeks to plan ahead")
+
+
+class PlayerProjectionRequest(BaseModel):
+    """Request for player projections."""
+    player_ids: list[int] = Field(..., description="Player IDs to project")
+    horizon: int = Field(default=6, ge=1, le=10)
+
+
+class RotationPairRequest(BaseModel):
+    """Request for finding rotation pairs."""
+    position: int = Field(..., ge=1, le=4, description="1=GK, 2=DEF, 3=MID, 4=FWD")
+    budget_max: float = Field(default=10.0, description="Max price per player")
+    horizon: int = Field(default=6, ge=1, le=10)
 
 
 # ============== Player Analysis Endpoints ==============
@@ -594,6 +620,404 @@ async def get_match_predictions(gameweek: Optional[int] = None):
         "gameweek": gameweek,
         "predictions": predictions,
     }
+
+
+# ============== Transfer Planning Endpoints ==============
+
+@router.post("/transfer-plan")
+async def generate_transfer_plan(request: TransferPlanRequest):
+    """
+    Generate a comprehensive multi-gameweek transfer plan.
+    
+    Analyzes fixtures, form, and expected points to recommend:
+    - Which players to sell and when
+    - Which players to buy as replacements
+    - Priority of transfers based on fixture swings
+    - Team and position-based fixture rankings
+    """
+    fpl_client = FPLClient()
+    
+    # Get all data
+    players = await fpl_client.get_players()
+    teams = await fpl_client.get_teams()
+    fixtures = await fpl_client.get_fixtures()
+    bootstrap = await fpl_client.get_bootstrap_static()
+    
+    # Get current gameweek
+    current_event = next(
+        (e for e in bootstrap.get("events", []) if e.get("is_current")),
+        {"id": 1}
+    )
+    current_gw = current_event.get("id", 1)
+    
+    # Build player lookup
+    player_dict = {p.id: p.model_dump() for p in players}
+    
+    # Get current squad
+    squad = [player_dict[pid] for pid in request.squad_ids if pid in player_dict]
+    
+    # Initialize planner
+    planner = TransferPlanner()
+    planner.load_data(
+        players=[p.model_dump() for p in players],
+        teams=[t.model_dump() for t in teams],
+        fixtures=fixtures,
+        current_gameweek=current_gw,
+    )
+    
+    # Generate plan
+    plan = planner.generate_transfer_plan(
+        current_squad=squad,
+        all_players=[p.model_dump() for p in players],
+        horizon=request.horizon,
+        budget_remaining=request.budget_remaining,
+        free_transfers=request.free_transfers,
+    )
+    
+    # Format response
+    return {
+        "current_gameweek": plan.current_gameweek,
+        "horizon": plan.horizon,
+        "recommended_transfers": [
+            {
+                "player_out": t.player_out,
+                "player_in": t.player_in,
+                "expected_gain": t.expected_gain,
+                "urgency": t.urgency,
+                "reasoning": t.reasoning,
+                "fixture_context": t.fixture_context,
+            }
+            for t in plan.recommended_transfers
+        ],
+        "players_to_sell": [
+            {
+                "id": p.player_id,
+                "name": p.player_name,
+                "team": p.team_name,
+                "position": p.position,
+                "fdr_avg": p.fixture_difficulty_avg,
+                "fixture_swing": p.fixture_swing,
+                "expected_pts": p.total_expected_points,
+                "reasoning": p.reasoning,
+            }
+            for p in plan.players_to_sell
+        ],
+        "players_to_buy": [
+            {
+                "id": p.player_id,
+                "name": p.player_name,
+                "team": p.team_name,
+                "position": p.position,
+                "price": p.price,
+                "fdr_avg": p.fixture_difficulty_avg,
+                "fixture_swing": p.fixture_swing,
+                "expected_pts": p.total_expected_points,
+                "reasoning": p.reasoning,
+            }
+            for p in plan.players_to_buy
+        ],
+        "players_to_watch": [
+            {
+                "id": p.player_id,
+                "name": p.player_name,
+                "team": p.team_name,
+                "position": p.position,
+                "price": p.price,
+                "fdr_avg": p.fixture_difficulty_avg,
+                "fixture_swing": p.fixture_swing,
+                "expected_pts": p.total_expected_points,
+                "reasoning": p.reasoning,
+            }
+            for p in plan.players_to_watch
+        ],
+        "team_fixture_rankings": plan.team_fixture_rankings,
+        "position_picks": {
+            "goalkeepers": [
+                {"id": p.player_id, "name": p.player_name, "team": p.team_name, 
+                 "price": p.price, "expected_pts": p.total_expected_points,
+                 "fdr_avg": p.fixture_difficulty_avg}
+                for p in plan.top_goalkeepers[:5]
+            ],
+            "defenders": [
+                {"id": p.player_id, "name": p.player_name, "team": p.team_name,
+                 "price": p.price, "expected_pts": p.total_expected_points,
+                 "fdr_avg": p.fixture_difficulty_avg}
+                for p in plan.top_defenders[:5]
+            ],
+            "midfielders": [
+                {"id": p.player_id, "name": p.player_name, "team": p.team_name,
+                 "price": p.price, "expected_pts": p.total_expected_points,
+                 "fdr_avg": p.fixture_difficulty_avg}
+                for p in plan.top_midfielders[:5]
+            ],
+            "forwards": [
+                {"id": p.player_id, "name": p.player_name, "team": p.team_name,
+                 "price": p.price, "expected_pts": p.total_expected_points,
+                 "fdr_avg": p.fixture_difficulty_avg}
+                for p in plan.top_forwards[:5]
+            ],
+        },
+    }
+
+
+@router.post("/player-projections")
+async def get_player_projections(request: PlayerProjectionRequest):
+    """
+    Get multi-gameweek expected points projections for specific players.
+    
+    Returns gameweek-by-gameweek projections with fixture context.
+    """
+    fpl_client = FPLClient()
+    
+    players = await fpl_client.get_players()
+    teams = await fpl_client.get_teams()
+    fixtures = await fpl_client.get_fixtures()
+    bootstrap = await fpl_client.get_bootstrap_static()
+    
+    current_event = next(
+        (e for e in bootstrap.get("events", []) if e.get("is_current")),
+        {"id": 1}
+    )
+    current_gw = current_event.get("id", 1)
+    
+    player_dict = {p.id: p.model_dump() for p in players}
+    
+    planner = TransferPlanner()
+    planner.load_data(
+        players=[p.model_dump() for p in players],
+        teams=[t.model_dump() for t in teams],
+        fixtures=fixtures,
+        current_gameweek=current_gw,
+    )
+    
+    projections = []
+    for pid in request.player_ids:
+        if pid not in player_dict:
+            continue
+        
+        player = player_dict[pid]
+        
+        # Get player history for better projections
+        history_data = await fpl_client.get_player_history(pid)
+        history = history_data.get("history", []) if history_data else None
+        
+        proj = planner.project_player(
+            player,
+            current_gw,
+            min(38, current_gw + request.horizon - 1),
+            history=history,
+        )
+        
+        projections.append({
+            "player_id": proj.player_id,
+            "player_name": proj.player_name,
+            "team": proj.team_name,
+            "position": proj.position,
+            "price": proj.price,
+            "current_form": proj.current_form,
+            "total_expected_points": proj.total_expected_points,
+            "avg_expected_points": proj.avg_expected_points,
+            "fixture_difficulty_avg": proj.fixture_difficulty_avg,
+            "fixture_swing": proj.fixture_swing,
+            "action": proj.action,
+            "reasoning": proj.reasoning,
+            "gameweek_projections": proj.gameweek_projections,
+        })
+    
+    return {
+        "current_gameweek": current_gw,
+        "horizon": request.horizon,
+        "projections": projections,
+    }
+
+
+@router.get("/fixture-swings")
+async def get_all_fixture_swings(horizon: int = 10):
+    """
+    Get fixture swing analysis for all teams.
+    
+    Identifies when fixtures turn easier or harder for each team.
+    """
+    fpl_client = FPLClient()
+    
+    teams = await fpl_client.get_teams()
+    fixtures = await fpl_client.get_fixtures()
+    bootstrap = await fpl_client.get_bootstrap_static()
+    
+    current_event = next(
+        (e for e in bootstrap.get("events", []) if e.get("is_current")),
+        {"id": 1}
+    )
+    current_gw = current_event.get("id", 1)
+    
+    planner = TransferPlanner()
+    planner.load_data(
+        players=[],  # Not needed for fixture analysis
+        teams=[t.model_dump() for t in teams],
+        fixtures=fixtures,
+        current_gameweek=current_gw,
+    )
+    
+    swing_analysis = []
+    for team in teams:
+        analysis = planner.get_fixture_swing_analysis(team.id, horizon)
+        swing_analysis.append(analysis)
+    
+    # Sort by fixture swing (positive = improving)
+    swing_analysis.sort(key=lambda x: x["fixture_swing"], reverse=True)
+    
+    return {
+        "current_gameweek": current_gw,
+        "horizon": horizon,
+        "teams": swing_analysis,
+        "summary": {
+            "best_improving": [t["team_name"] for t in swing_analysis[:5]],
+            "worst_declining": [t["team_name"] for t in swing_analysis[-5:]],
+        },
+    }
+
+
+@router.post("/rotation-pairs")
+async def find_rotation_pairs(request: RotationPairRequest):
+    """
+    Find players who rotate well based on complementary fixtures.
+    
+    Returns pairs of players where when one has tough fixtures,
+    the other has easy ones.
+    """
+    fpl_client = FPLClient()
+    
+    players = await fpl_client.get_players()
+    teams = await fpl_client.get_teams()
+    fixtures = await fpl_client.get_fixtures()
+    bootstrap = await fpl_client.get_bootstrap_static()
+    
+    current_event = next(
+        (e for e in bootstrap.get("events", []) if e.get("is_current")),
+        {"id": 1}
+    )
+    current_gw = current_event.get("id", 1)
+    
+    planner = TransferPlanner()
+    planner.load_data(
+        players=[p.model_dump() for p in players],
+        teams=[t.model_dump() for t in teams],
+        fixtures=fixtures,
+        current_gameweek=current_gw,
+    )
+    
+    positional_planner = PositionalPlanner(planner)
+    pairs = positional_planner.find_rotation_pairs(
+        position=request.position,
+        horizon=request.horizon,
+        budget_max=request.budget_max,
+    )
+    
+    position_names = {1: "Goalkeeper", 2: "Defender", 3: "Midfielder", 4: "Forward"}
+    
+    return {
+        "position": position_names.get(request.position, "Unknown"),
+        "budget_max": request.budget_max,
+        "horizon": request.horizon,
+        "rotation_pairs": pairs,
+    }
+
+
+@router.get("/differentials/by-fixtures")
+async def find_fixture_based_differentials(
+    max_ownership: float = 10.0,
+    min_form: float = 3.0,
+    horizon: int = 6,
+):
+    """
+    Find differentials with great upcoming fixtures.
+    
+    Low-owned players with good form and easy fixture runs.
+    """
+    fpl_client = FPLClient()
+    
+    players = await fpl_client.get_players()
+    teams = await fpl_client.get_teams()
+    fixtures = await fpl_client.get_fixtures()
+    bootstrap = await fpl_client.get_bootstrap_static()
+    
+    current_event = next(
+        (e for e in bootstrap.get("events", []) if e.get("is_current")),
+        {"id": 1}
+    )
+    current_gw = current_event.get("id", 1)
+    
+    planner = TransferPlanner()
+    planner.load_data(
+        players=[p.model_dump() for p in players],
+        teams=[t.model_dump() for t in teams],
+        fixtures=fixtures,
+        current_gameweek=current_gw,
+    )
+    
+    diff_finder = DifferentialFinder(planner)
+    differentials = diff_finder.find_differentials(
+        max_ownership=max_ownership,
+        min_form=min_form,
+        horizon=horizon,
+    )
+    
+    return {
+        "current_gameweek": current_gw,
+        "criteria": {
+            "max_ownership": max_ownership,
+            "min_form": min_form,
+            "horizon": horizon,
+        },
+        "differentials": [
+            {
+                "id": p.player_id,
+                "name": p.player_name,
+                "team": p.team_name,
+                "position": p.position,
+                "price": p.price,
+                "form": p.current_form,
+                "fdr_avg": p.fixture_difficulty_avg,
+                "expected_pts": p.total_expected_points,
+                "reasoning": p.reasoning,
+            }
+            for p in differentials
+        ],
+    }
+
+
+@router.get("/team/{team_id}/fixture-swing")
+async def get_team_fixture_swing(team_id: int, horizon: int = 10):
+    """
+    Get detailed fixture swing analysis for a specific team.
+    """
+    fpl_client = FPLClient()
+    
+    teams = await fpl_client.get_teams()
+    fixtures = await fpl_client.get_fixtures()
+    bootstrap = await fpl_client.get_bootstrap_static()
+    
+    current_event = next(
+        (e for e in bootstrap.get("events", []) if e.get("is_current")),
+        {"id": 1}
+    )
+    current_gw = current_event.get("id", 1)
+    
+    team = next((t for t in teams if t.id == team_id), None)
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    
+    planner = TransferPlanner()
+    planner.load_data(
+        players=[],
+        teams=[t.model_dump() for t in teams],
+        fixtures=fixtures,
+        current_gameweek=current_gw,
+    )
+    
+    analysis = planner.get_fixture_swing_analysis(team_id, horizon)
+    
+    return analysis
 
 
 # ============== Helper Functions ==============
