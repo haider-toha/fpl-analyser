@@ -61,10 +61,10 @@ Thumbs.db
 *.bak
 *.tmp
 
-# Model files
+# ML Model files (saved models, not Python packages)
 *.joblib
 *.pkl
-models/
+/ml_models/
 
 # Cache
 .cache/
