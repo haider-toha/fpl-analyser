@@ -212,14 +212,14 @@ export default function LivePage() {
 
   const { data: fixturesData, isLoading: fixturesLoading, refetch: refetchFixtures } = useQuery<{ fixtures: Fixture[] }>({
     queryKey: ["fixtures", currentGw],
-    queryFn: () => api.getGameweekFixtures(currentGw!),
+    queryFn: () => api.getGameweekFixtures<{ fixtures: Fixture[] }>(currentGw!),
     enabled: !!currentGw,
     refetchInterval: 60000,
   });
 
   const { data: liveData, isLoading: liveLoading, refetch: refetchLive } = useQuery<LiveData>({
     queryKey: ["live", currentGw],
-    queryFn: () => api.getLiveScores(currentGw!),
+    queryFn: () => api.getLiveScores<LiveData>(currentGw!),
     enabled: !!currentGw,
     refetchInterval: 30000,
   });
@@ -230,7 +230,7 @@ export default function LivePage() {
 
   const { data: managerData, isLoading: managerLoading, error: managerError } = useQuery<ManagerData>({
     queryKey: ["manager-live", searchManagerId, currentGw],
-    queryFn: () => api.getManagerLiveScore(searchManagerId!, currentGw),
+    queryFn: () => api.getManagerLiveScore<ManagerData>(searchManagerId!, currentGw),
     enabled: !!searchManagerId && !!currentGw,
     refetchInterval: 30000,
   });

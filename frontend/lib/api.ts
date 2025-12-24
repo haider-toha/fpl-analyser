@@ -106,25 +106,25 @@ class ApiClient {
   }
 
   // Live
-  async getCurrentGameweek() {
-    return this.fetch("/api/live/gameweek");
+  async getCurrentGameweek<T = unknown>(): Promise<T> {
+    return this.fetch<T>("/api/live/gameweek");
   }
 
-  async getLiveScores(gameweek: number) {
-    return this.fetch(`/api/live/gameweek/${gameweek}/scores`);
+  async getLiveScores<T = unknown>(gameweek: number): Promise<T> {
+    return this.fetch<T>(`/api/live/gameweek/${gameweek}/scores`);
   }
 
-  async getGameweekFixtures(gameweek: number) {
-    return this.fetch(`/api/live/gameweek/${gameweek}/fixtures`);
+  async getGameweekFixtures<T = unknown>(gameweek: number): Promise<T> {
+    return this.fetch<T>(`/api/live/gameweek/${gameweek}/fixtures`);
   }
 
-  async getManagerLiveScore(managerId: number, gameweek?: number) {
+  async getManagerLiveScore<T = unknown>(managerId: number, gameweek?: number): Promise<T> {
     const params = gameweek ? `?gameweek=${gameweek}` : "";
-    return this.fetch(`/api/live/manager/${managerId}/live${params}`);
+    return this.fetch<T>(`/api/live/manager/${managerId}/live${params}`);
   }
 
-  async getManager(managerId: number) {
-    return this.fetch(`/api/live/manager/${managerId}`);
+  async getManager<T = unknown>(managerId: number): Promise<T> {
+    return this.fetch<T>(`/api/live/manager/${managerId}`);
   }
 
   // Analytics
