@@ -34,7 +34,7 @@ export default function LeaguePage() {
 
   const { data, isLoading, error } = useQuery<LeagueData>({
     queryKey: ["league", searchId],
-    queryFn: () => api.getLeague(searchId!),
+    queryFn: () => api.getLeague(searchId!) as Promise<LeagueData>,
     enabled: !!searchId,
   });
 
