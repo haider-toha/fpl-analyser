@@ -15,7 +15,13 @@ class Settings(BaseSettings):
     fpl_api_base_url: str = "https://fantasy.premierleague.com/api"
     
     # CORS
-    cors_origins: list[str] = ["http://localhost:3000", "http://localhost:3001", "http://127.0.0.1:3000", "http://127.0.0.1:3001"]
+    cors_origins: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+        "https://fpl-analyser-frontend.onrender.com",
+    ]
     
     class Config:
         env_file = ".env"
