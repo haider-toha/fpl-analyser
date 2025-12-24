@@ -1,0 +1,2 @@
+# Squad optimizer
+
