@@ -13,13 +13,17 @@ services:
         value: /opt/render/project/src/backend
     plan: free
 
-staticSites:
-  - type: static
+  - type: web
     name: fpl-analyser-frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: out
+    runtime: node
+    region: frankfurt
     rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
       - key: NEXT_PUBLIC_API_URL
         value: https://fpl-analyser-backend.onrender.com
+      - key: PORT
+        value: 3000
+    plan: free
 
