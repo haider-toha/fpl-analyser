@@ -406,4 +406,4 @@ This tool is intended for educational and entertainment purposes. Fantasy Premie
 
 - Fantasy Premier League for providing the public API that makes this analysis possible
 - The open-source community for the excellent libraries that power this application
-- The FPL community for continuous discussion of strategy and analytics
+- The FPL community for the discussions
