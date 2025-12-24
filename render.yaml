@@ -11,18 +11,13 @@ services:
         value: 3.11.9
     plan: free
 
-  - type: web
+staticSites:
+  - type: static
     name: fpl-analyser-frontend
-    runtime: node
-    region: frankfurt
-    rootDir: frontend
     buildCommand: npm install && npm run build
-    startCommand: npm start
+    staticPublishPath: out
+    rootDir: frontend
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          name: fpl-analyser-backend
-          type: web
-          property: host
-    plan: free
+        value: https://fpl-analyser-backend.onrender.com
 
