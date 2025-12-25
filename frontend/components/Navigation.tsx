@@ -38,9 +38,6 @@ export function Navigation() {
               <span className="text-base font-semibold tracking-tight">
                 FPL Analyser
               </span>
-              <span className="text-[10px] text-muted-foreground/60 uppercase tracking-widest hidden sm:inline">
-                by Haider
-              </span>
             </div>
           </Link>
 
