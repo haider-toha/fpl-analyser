@@ -1,272 +1,955 @@
 # FPL Analyser by Haider
 
-An advanced Fantasy Premier League analytics platform that combines machine learning, Monte Carlo simulations, and mathematical optimization to provide data-driven insights for FPL managers. The application fetches real-time data from the official Fantasy Premier League API and applies sophisticated analytical techniques to help users make informed decisions about transfers, captaincy, and squad selection.
+An advanced Fantasy Premier League analytics platform combining machine learning, Monte Carlo simulations, and mathematical optimization for data-driven FPL decisions.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           FPL ANALYSER PLATFORM                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐ │
+│   │   Player    │    │    Squad    │    │   Monte     │    │    Live     │ │
+│   │  Analysis   │    │ Optimization│    │   Carlo     │    │  Tracking   │ │
+│   │             │    │             │    │ Simulations │    │             │ │
+│   └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘ │
+│                                                                             │
+│   ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐ │
+│   │  Transfer   │    │   League    │    │   Fixture   │    │    Chip     │ │
+│   │  Planner    │    │  Analytics  │    │  Analysis   │    │  Strategy   │ │
+│   │             │    │             │    │             │    │             │ │
+│   └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘ │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [Architecture](#architecture)
-- [Features](#features)
-  - [Player Analysis](#player-analysis)
-  - [Squad Optimization](#squad-optimization)
-  - [Transfer Predictions](#transfer-predictions)
-  - [Monte Carlo Simulations](#monte-carlo-simulations)
-  - [Live Gameweek Tracking](#live-gameweek-tracking)
-  - [Mini-League Analytics](#mini-league-analytics)
-  - [Advanced Analytics](#advanced-analytics)
-- [Technical Implementation](#technical-implementation)
-  - [Expected Points Model](#expected-points-model)
-  - [Integer Linear Programming](#integer-linear-programming)
-  - [Simulation Engine](#simulation-engine)
-  - [Fixture Difficulty Analysis](#fixture-difficulty-analysis)
+- [System Architecture](#system-architecture)
+- [Data Pipeline](#data-pipeline)
+- [Machine Learning System](#machine-learning-system)
+- [Optimization Engine](#optimization-engine)
+- [Simulation Framework](#simulation-framework)
+- [Frontend Architecture](#frontend-architecture)
+- [Core Features](#core-features)
+- [Performance](#performance)
 - [Technology Stack](#technology-stack)
 - [Getting Started](#getting-started)
 - [API Reference](#api-reference)
 - [Deployment](#deployment)
-- [License](#license)
 
 ---
 
 ## Overview
 
-Fantasy Premier League is a game of decision-making under uncertainty. Managers must allocate a limited budget across 15 players, predict which players will perform well in upcoming gameweeks, and optimize transfers to maximize long-term points. Traditional approaches rely on intuition and basic statistics, but FPL Analyser takes a quantitative approach.
+Fantasy Premier League presents a **multi-period stochastic optimization problem**:
 
-The platform addresses three fundamental challenges in FPL:
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                        THE THREE CORE CHALLENGES                         │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐ │
+│  │                    │  │                    │  │                    │ │
+│  │    PREDICTION      │  │   OPTIMIZATION     │  │  RISK ASSESSMENT   │ │
+│  │                    │  │                    │  │                    │ │
+│  │  How many points   │  │  Which 15 players  │  │  What's the range  │ │
+│  │  will each player  │  │  maximize returns  │  │  of outcomes, not  │ │
+│  │  score next GW?    │  │  under budget &    │  │  just the average? │ │
+│  │                    │  │  squad rules?      │  │                    │ │
+│  │  ┌──────────────┐  │  │  ┌──────────────┐  │  │  ┌──────────────┐  │ │
+│  │  │ ML Models    │  │  │  │ Integer LP   │  │  │  │ Monte Carlo  │  │ │
+│  │  │ xG, Form,    │  │  │  │ CBC Solver   │  │  │  │ 10,000 sims  │  │ │
+│  │  │ Fixtures     │  │  │  │ <1 sec solve │  │  │  │ distributions│  │ │
+│  │  └──────────────┘  │  │  └──────────────┘  │  │  └──────────────┘  │ │
+│  │                    │  │                    │  │                    │ │
+│  └────────────────────┘  └────────────────────┘  └────────────────────┘ │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
 
-1. **Prediction**: Estimating how many points each player will score in future gameweeks, accounting for factors like form, fixture difficulty, expected goals, and playing time.
+### Why Quantitative FPL?
 
-2. **Optimization**: Given point predictions, finding the mathematically optimal squad that maximizes expected returns while respecting all FPL constraints (budget, squad size, position limits, and club limits).
-
-3. **Risk Assessment**: Understanding the uncertainty in predictions through probability distributions rather than single point estimates, enabling managers to make risk-aware decisions.
-
----
-
-## Architecture
-
-The application follows a decoupled architecture with a Python backend and a Next.js frontend, communicating via a RESTful API.
-
-### Backend
-
-The backend is built with FastAPI, a modern Python web framework optimized for high performance and automatic API documentation. It handles all data fetching from the official FPL API, applies machine learning models for predictions, runs optimization algorithms, and executes Monte Carlo simulations.
-
-The backend is organized into several modules:
-
-- **Data Layer**: Handles communication with the FPL API, including caching to reduce API calls and improve response times. Player data, fixtures, and live scores are fetched and normalized into consistent data structures.
-
-- **Machine Learning Module**: Contains the expected points model, Bayesian inference for player performance, and fixture difficulty analysis. Models are designed to update predictions as new data becomes available throughout the season.
-
-- **Optimization Module**: Implements integer linear programming for squad selection, transfer planning, and captain selection. Uses the PuLP library with the CBC solver for fast, exact solutions.
-
-- **Simulation Module**: Runs Monte Carlo simulations to generate probability distributions for gameweek outcomes, season projections, and what-if scenarios.
-
-- **API Layer**: Exposes all functionality through RESTful endpoints with automatic validation, error handling, and OpenAPI documentation.
-
-### Frontend
-
-The frontend is a Next.js application using the App Router pattern. It provides a responsive, modern interface for interacting with the analytics platform. The UI is built with React and styled using Tailwind CSS, with interactive charts powered by Recharts.
-
-Data fetching is managed by TanStack Query, which provides caching, background refetching, and optimistic updates. This ensures the UI remains responsive even when making multiple API calls.
+| Traditional Approach | FPL Analyser Approach |
+|---------------------|----------------------|
+| "This player looks good" | Expected points model with 50+ features |
+| Pick players you like | ILP solver guarantees mathematical optimum |
+| Gut feel on transfers | Multi-gameweek rolling horizon planning |
+| Hope for the best | Probability distributions & confidence intervals |
 
 ---
 
-## Features
+## System Architecture
 
-### Player Analysis
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              HIGH-LEVEL ARCHITECTURE                        │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-The player analysis module provides comprehensive statistics for every Premier League player in the FPL game. For each player, the platform displays:
+                            ┌───────────────────┐
+                            │                   │
+                            │   Next.js App     │
+                            │   (Frontend)      │
+                            │                   │
+                            └─────────┬─────────┘
+                                      │
+                                      │ REST API (JSON)
+                                      │
+                            ┌─────────▼─────────┐
+                            │                   │
+                            │   FastAPI         │
+                            │   (Backend)       │
+                            │                   │
+                            └─────────┬─────────┘
+                                      │
+              ┌───────────────────────┼───────────────────────┐
+              │                       │                       │
+    ┌─────────▼─────────┐   ┌─────────▼─────────┐   ┌─────────▼─────────┐
+    │                   │   │                   │   │                   │
+    │   ML Module       │   │   Optimizer       │   │   Simulator       │
+    │                   │   │                   │   │                   │
+    │ • Expected Points │   │ • Squad ILP       │   │ • Monte Carlo     │
+    │ • Bayesian Models │   │ • Transfer Plan   │   │ • Distributions   │
+    │ • Fixture Rating  │   │ • Captain Pick    │   │ • Risk Analysis   │
+    │                   │   │                   │   │                   │
+    └───────────────────┘   └───────────────────┘   └───────────────────┘
+              │                       │                       │
+              └───────────────────────┼───────────────────────┘
+                                      │
+                            ┌─────────▼─────────┐
+                            │                   │
+                            │   Data Layer      │
+                            │   (FPL Client)    │
+                            │                   │
+                            │ • Async Fetching  │
+                            │ • TTL Caching     │
+                            │ • Rate Limiting   │
+                            │                   │
+                            └─────────┬─────────┘
+                                      │
+                                      │ HTTPS
+                                      │
+                            ┌─────────▼─────────┐
+                            │                   │
+                            │   Official FPL    │
+                            │   API             │
+                            │                   │
+                            └───────────────────┘
+```
 
-- **Basic Information**: Name, team, position, current price, and ownership percentage across all FPL managers.
+### Backend Module Structure
 
-- **Performance Metrics**: Total points, points per game, form (average points over the last 5 gameweeks), goals, assists, clean sheets, and bonus points.
-
-- **Advanced Statistics**: Expected goals (xG), expected assists (xA), and expected goal involvement (xGI) from underlying match data. These metrics often predict future performance better than actual goals and assists.
-
-- **Predicted Points**: The expected points for upcoming gameweeks based on the machine learning model, accounting for fixture difficulty and recent form.
-
-- **Historical Performance**: A complete gameweek-by-gameweek breakdown of points, minutes played, and bonus points system (BPS) scores.
-
-- **Upcoming Fixtures**: The next 5 fixtures with difficulty ratings, allowing managers to assess whether a player has favorable or difficult matches ahead.
-
-Players can be filtered by position, sorted by various metrics, and searched by name. This allows managers to quickly identify high-value options or compare alternatives.
-
-### Squad Optimization
-
-The squad optimizer uses integer linear programming to find the mathematically optimal squad given a set of constraints. Unlike heuristic approaches that might miss optimal solutions, ILP guarantees finding the best possible squad.
-
-The optimizer can solve several problems:
-
-- **New Squad Selection**: Given a budget of 100 million, select 15 players (2 goalkeepers, 5 defenders, 5 midfielders, 3 forwards) that maximize total expected points while respecting the constraint of maximum 3 players per club.
-
-- **Transfer Optimization**: Given an existing squad and available transfers, find the optimal transfers to make. This accounts for transfer costs (4 points per additional transfer beyond free transfers) and can plan multiple gameweeks ahead.
-
-- **Starting XI Selection**: Given a 15-player squad, select the optimal 11 starters and formation that maximizes expected points while respecting formation rules (at least 1 goalkeeper, 3 defenders, and 1 forward).
-
-- **Captain Selection**: Identify the player most likely to score the highest points, accounting for the 2x captain multiplier.
-
-The optimizer runs in under one second for typical problems, making it practical for interactive use.
-
-### Transfer Predictions
-
-The transfer predictions module provides multi-gameweek fixture analysis and data-driven transfer recommendations:
-
-- **Fixture Swing Analysis**: Identifies teams whose fixtures are improving or worsening over the planning horizon, highlighting opportunities to buy players from teams entering easy runs and sell players facing difficult schedules.
-
-- **Best Fixture Runs**: Ranks all Premier League teams by average fixture difficulty rating over the selected horizon (4, 6, 8, or 10 gameweeks), helping managers plan ahead.
-
-- **Transfer Recommendations**: Generates actionable transfer suggestions with urgency levels (immediate, soon, plan ahead), expected point gains, and detailed reasoning based on fixture context.
-
-- **Rotation Pairs**: Identifies player pairs at each position who complement each other's fixtures, enabling managers to rotate players effectively based on upcoming opponents.
-
-- **Fixture-Based Differentials**: Surfaces low-ownership players with favorable upcoming fixtures, providing differential opportunities that can help managers gain rank.
-
-- **Position-Based Top Picks**: Ranks the best goalkeeper, defender, midfielder, and forward options based on expected points over the planning horizon.
-
-The module uses a clean black and white design with orange accent charts for clear visual hierarchy.
-
-### Monte Carlo Simulations
-
-Point predictions are inherently uncertain. A player expected to score 6 points might score anywhere from 0 to 20 depending on match events. Monte Carlo simulation addresses this uncertainty by running thousands of simulated gameweeks.
-
-For each simulation:
-
-1. Each player's points are sampled from a probability distribution centered on their expected points.
-2. The total squad points are calculated, applying captain multipliers.
-3. Results are aggregated across all simulations.
-
-After 10,000 simulations, the platform provides:
-
-- **Expected Points**: The mean outcome across all simulations.
-- **Probability Distributions**: Histograms showing the likelihood of different point totals.
-- **Confidence Intervals**: The range within which points are likely to fall with 90% probability.
-- **Upside and Downside Risk**: The probability of exceeding certain thresholds or falling below others.
-- **Captain Comparison**: Side-by-side simulation results for different captain choices.
-
-This probabilistic approach helps managers understand not just what is likely to happen, but the full range of possible outcomes.
-
-### Live Gameweek Tracking
-
-During active gameweeks, the platform provides real-time tracking of scores and events:
-
-- **Live Scores**: Current points for all players, updated as matches progress.
-- **Bonus Point Predictions**: Estimated bonus points based on the current BPS standings in each match.
-- **Squad Score Calculation**: Enter your team ID to see your current gameweek score with live updates.
-- **Fixture Status**: Which matches are in progress, finished, or yet to start.
-
-This allows managers to track their performance throughout the gameweek without manually calculating scores.
-
-### Mini-League Analytics
-
-FPL is often played competitively in mini-leagues with friends, colleagues, or online communities. The platform provides analytics for these leagues:
-
-- **Current Standings**: Full league table with total points, gameweek points, and rank changes.
-- **Manager Comparison**: Compare any two managers' squads to identify differentials.
-- **Rank Projections**: Based on remaining fixtures and squad compositions, project likely final standings.
-
-### Advanced Analytics
-
-Beyond the core features, the platform includes several advanced analytical tools:
-
-**Value Over Replacement (VOR) Rankings**: Rather than looking at total points, VOR measures how many more points a player scores compared to a replacement-level player at their position. This helps identify players who provide the most value relative to alternatives.
-
-**Fixture Difficulty Analysis**: Aggregate fixture difficulty ratings over multiple gameweeks to identify teams with favorable or difficult runs. This informs decisions about which team's players to target for transfers.
-
-**Captain Differential Analysis**: Identify low-ownership players with high expected points who could serve as differential captain choices to gain rank on the competition.
-
-**Chip Strategy Recommendations**: Analyze when to use chips (Bench Boost, Triple Captain, Free Hit, Wildcard) based on fixture patterns, double gameweeks, and current squad state.
-
-**Match Predictions**: Probabilistic predictions for upcoming matches including expected goals, clean sheet probability, and likely scorelines.
+```
+backend/
+├── app/
+│   ├── api/                    # REST endpoints
+│   │   ├── players.py          # Player data & stats
+│   │   ├── optimizer.py        # Squad optimization
+│   │   ├── simulation.py       # Monte Carlo sims
+│   │   ├── live.py             # Real-time scores
+│   │   ├── leagues.py          # Mini-league data
+│   │   └── analytics.py        # Advanced metrics
+│   │
+│   ├── data/                   # Data access layer
+│   │   └── fpl_client.py       # FPL API wrapper
+│   │
+│   ├── ml/                     # Machine learning
+│   │   ├── expected_points.py  # Point predictions
+│   │   ├── bayesian_model.py   # Player ability estimation
+│   │   ├── fixture_analyzer.py # Fixture difficulty
+│   │   ├── player_value.py     # VOR calculations
+│   │   ├── transfer_planner.py # Multi-GW planning
+│   │   └── chip_strategy.py    # Chip timing
+│   │
+│   ├── optimizer/              # Mathematical optimization
+│   │   └── squad_optimizer.py  # ILP solver
+│   │
+│   ├── simulation/             # Monte Carlo engine
+│   │   └── monte_carlo.py      # Probability sampling
+│   │
+│   └── models/                 # Domain models
+│       └── player.py           # Player entity
+```
 
 ---
 
-## Technical Implementation
+## Data Pipeline
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           DATA FLOW PIPELINE                                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+  FPL API                                                           Consumer
+     │                                                                  ▲
+     │                                                                  │
+     ▼                                                                  │
+┌─────────┐      ┌─────────┐      ┌─────────┐      ┌─────────┐      ┌─────────┐
+│         │      │         │      │         │      │         │      │         │
+│ INGEST  │ ──── │NORMALIZE│ ──── │ ENRICH  │ ──── │  CACHE  │ ──── │  SERVE  │
+│         │      │         │      │         │      │         │      │         │
+└─────────┘      └─────────┘      └─────────┘      └─────────┘      └─────────┘
+     │                │                │                │                │
+     ▼                ▼                ▼                ▼                ▼
+┌─────────┐      ┌─────────┐      ┌─────────┐      ┌─────────┐      ┌─────────┐
+│Raw JSON │      │ Convert │      │Calculate│      │ TTL-    │      │ JSON    │
+│from FPL │      │ types,  │      │ derived │      │ based   │      │ response│
+│endpoints│      │ resolve │      │ metrics,│      │ in-mem  │      │ with    │
+│         │      │ FKs     │      │ run ML  │      │ storage │      │ schema  │
+└─────────┘      └─────────┘      └─────────┘      └─────────┘      └─────────┘
+```
+
+### FPL API Endpoints Used
+
+| Endpoint | Data | Update Frequency | Cache TTL |
+|----------|------|------------------|-----------|
+| `bootstrap-static` | All players, teams, GWs | Daily | 15-30 min |
+| `element-summary/{id}` | Player history & fixtures | Daily | 30 min |
+| `fixtures` | Match schedule & results | Daily | 15 min |
+| `event/{gw}/live` | Live scores | Every few min | 60 sec |
+| `entry/{id}` | Manager squad & history | On request | 5 min |
+| `leagues-classic/{id}` | League standings | On request | 5 min |
+
+### Caching Strategy
+
+```
+                    Request arrives
+                          │
+                          ▼
+                   ┌──────────────┐
+                   │ Cache lookup │
+                   └──────┬───────┘
+                          │
+             ┌────────────┴────────────┐
+             │                         │
+             ▼                         ▼
+      ┌─────────────┐          ┌─────────────┐
+      │  HIT        │          │  MISS       │
+      │  (fresh)    │          │             │
+      └──────┬──────┘          └──────┬──────┘
+             │                        │
+             │                        ▼
+             │                 ┌─────────────┐
+             │                 │ In-flight?  │
+             │                 └──────┬──────┘
+             │                        │
+             │           ┌────────────┴────────────┐
+             │           │                         │
+             │           ▼                         ▼
+             │    ┌─────────────┐          ┌─────────────┐
+             │    │ YES: Wait   │          │ NO: Fetch   │
+             │    │ for pending │          │ from FPL    │
+             │    └──────┬──────┘          └──────┬──────┘
+             │           │                        │
+             │           │                        ▼
+             │           │                 ┌─────────────┐
+             │           │                 │Store in     │
+             │           │                 │cache + TTL  │
+             │           │                 └──────┬──────┘
+             │           │                        │
+             └───────────┴────────────────────────┘
+                                   │
+                                   ▼
+                            Return data
+```
+
+**Key Patterns:**
+- **Request Deduplication**: Concurrent requests for same data coalesce
+- **Conditional Fetching**: ETag headers avoid re-downloading unchanged data
+- **Tiered TTL**: Live data = short TTL, static data = long TTL
+
+---
+
+## Machine Learning System
 
 ### Expected Points Model
 
-The expected points model predicts how many FPL points a player will score in an upcoming gameweek. The model uses gradient boosting (XGBoost) trained on historical gameweek data.
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        EXPECTED POINTS PREDICTION                           │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-Input features include:
+                              INPUT FEATURES
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │                                                                     │
+    │  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐       │
+    │  │   FORM    │  │UNDERLYING │  │  FIXTURE  │  │AVAILABILITY│       │
+    │  │           │  │   STATS   │  │  CONTEXT  │  │           │       │
+    │  ├───────────┤  ├───────────┤  ├───────────┤  ├───────────┤       │
+    │  │ Points/5  │  │ xG, xA    │  │ Home/Away │  │ Injury %  │       │
+    │  │ Goals/5   │  │ xGI       │  │ Opp str.  │  │ Minutes   │       │
+    │  │ Assists/5 │  │ Shots     │  │ Days rest │  │ trend     │       │
+    │  │ Minutes/5 │  │ Key passes│  │ FDR       │  │ News      │       │
+    │  │ BPS/5     │  │ per 90    │  │           │  │           │       │
+    │  └───────────┘  └───────────┘  └───────────┘  └───────────┘       │
+    │                                                                     │
+    └──────────────────────────────┬──────────────────────────────────────┘
+                                   │
+                                   │  ~50-80 features
+                                   │
+                                   ▼
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │                                                                     │
+    │                     POSITION-SPECIFIC MODELS                        │
+    │                                                                     │
+    │    ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐   │
+    │    │   GKP    │    │   DEF    │    │   MID    │    │   FWD    │   │
+    │    │  Model   │    │  Model   │    │  Model   │    │  Model   │   │
+    │    │          │    │          │    │          │    │          │   │
+    │    │ Saves,   │    │ CS, Tckl │    │ Goals,   │    │ Goals,   │   │
+    │    │ Pen Save │    │ BPS      │    │ Assists  │    │ Assists  │   │
+    │    └────┬─────┘    └────┬─────┘    └────┬─────┘    └────┬─────┘   │
+    │         │               │               │               │         │
+    └─────────┼───────────────┼───────────────┼───────────────┼─────────┘
+              │               │               │               │
+              └───────────────┴───────┬───────┴───────────────┘
+                                      │
+                                      ▼
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │                       GRADIENT BOOSTING (XGBoost)                   │
+    │                                                                     │
+    │   • 100-200 trees, max depth 4-6                                   │
+    │   • L1/L2 regularization to prevent overfitting                    │
+    │   • Learning rate decay for refined predictions                    │
+    │   • Cross-validation for hyperparameter tuning                     │
+    │                                                                     │
+    └──────────────────────────────┬──────────────────────────────────────┘
+                                   │
+                                   ▼
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │                        CALIBRATION LAYER                            │
+    │                                                                     │
+    │   Platt scaling ensures probabilistic validity:                    │
+    │   If model predicts 5.0 xP, actual average ≈ 5.0 points            │
+    │                                                                     │
+    └──────────────────────────────┬──────────────────────────────────────┘
+                                   │
+                                   ▼
+                         ┌─────────────────┐
+                         │ Expected Points │
+                         │   per Player    │
+                         │   per Gameweek  │
+                         └─────────────────┘
+```
 
-- **Form Metrics**: Recent points, minutes, goals, and assists over the last 5 gameweeks.
-- **Underlying Statistics**: Expected goals (xG), expected assists (xA), shots, key passes, and expected goal involvement.
-- **Fixture Context**: Home or away, opponent strength ratings, days since last match.
-- **Season Aggregates**: Total points, points per 90 minutes, consistency measures.
-- **Availability**: Injury news, chance of playing percentage, and recent playing time.
+### Why Separate Models Per Position?
 
-The model is trained using cross-validation to prevent overfitting and is regularly updated as new gameweek data becomes available. Separate models are trained for each position group (goalkeepers, defenders, midfielders, forwards) to capture position-specific patterns.
+| Position | Primary Point Sources | Key Features |
+|----------|----------------------|--------------|
+| **GKP** | Saves, clean sheets, penalty saves | Goals conceded by opponent, shot volume faced |
+| **DEF** | Clean sheets, goals, assists, BPS | Team defensive strength, set piece involvement |
+| **MID** | Goals, assists, clean sheets | xG, xA, chance creation, goal threat |
+| **FWD** | Goals, assists | xG, shots in box, service quality |
 
-### Integer Linear Programming
+### Bayesian Player Modeling
 
-Squad optimization is formulated as an integer linear programming problem. The objective is to maximize the sum of expected points across selected players, subject to constraints.
+```
+                         BAYESIAN UPDATING OVER SEASON
+    
+    Early Season                    Mid-Season                    Late Season
+    (GW 1-5)                       (GW 10-20)                    (GW 30+)
+    
+    ┌─────────────┐               ┌─────────────┐               ┌─────────────┐
+    │             │               │             │               │             │
+    │   Wide      │               │   Narrower  │               │   Tight     │
+    │   Prior     │               │   Posterior │               │   Posterior │
+    │             │               │             │               │             │
+    │    ╱╲       │               │     ╱╲      │               │      │      │
+    │   ╱  ╲      │     ────►     │    ╱  ╲     │     ────►     │     ╱╲      │
+    │  ╱    ╲     │   Bayesian    │   ╱    ╲    │   Bayesian    │    ╱  ╲     │
+    │ ╱      ╲    │    Update     │  ╱      ╲   │    Update     │   ╱    ╲    │
+    │╱        ╲   │               │ ╱        ╲  │               │  ╱      ╲   │
+    └─────────────┘               └─────────────┘               └─────────────┘
+    
+    High uncertainty               Moderate uncertainty          Low uncertainty
+    → Shrink toward                → Individual data             → Trust observed
+      position average               starts to dominate            performance
+```
 
-The mathematical formulation:
+**Hierarchical Pooling:**
+```
+                    ┌─────────────────────┐
+                    │   League Average    │
+                    │   (all positions)   │
+                    └──────────┬──────────┘
+                               │
+           ┌───────────────────┼───────────────────┐
+           │                   │                   │
+           ▼                   ▼                   ▼
+    ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+    │  Position   │     │  Position   │     │  Position   │
+    │   Prior     │     │   Prior     │     │   Prior     │
+    │   (MID)     │     │   (DEF)     │     │   (FWD)     │
+    └──────┬──────┘     └──────┬──────┘     └──────┬──────┘
+           │                   │                   │
+     ┌─────┴─────┐       ┌─────┴─────┐       ┌─────┴─────┐
+     │           │       │           │       │           │
+     ▼           ▼       ▼           ▼       ▼           ▼
+┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐
+│Player A │ │Player B │ │Player C │ │Player D │ │Player E │
+│Estimate │ │Estimate │ │Estimate │ │Estimate │ │Estimate │
+└─────────┘ └─────────┘ └─────────┘ └─────────┘ └─────────┘
+```
 
-- **Decision Variables**: Binary variables indicating whether each player is selected.
-- **Objective Function**: Maximize the sum of expected points multiplied by selection variables.
-- **Budget Constraint**: Total cost of selected players must not exceed the available budget.
-- **Squad Size Constraint**: Exactly 15 players must be selected.
-- **Position Constraints**: Exactly 2 goalkeepers, 5 defenders, 5 midfielders, and 3 forwards.
-- **Club Constraint**: Maximum 3 players from any single Premier League club.
-- **Starting XI Constraints**: When selecting starters, formation rules apply (minimum 1 GK, 3 DEF, 2 MID, 1 FWD, maximum 11 total).
+### Fixture Difficulty Rating
 
-The PuLP library formulates the problem and the CBC solver finds the optimal solution. Because the problem has a special structure (it is a variant of the knapsack problem), solutions are found very quickly despite the large search space.
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      FIXTURE DIFFICULTY CALCULATION                         │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-### Simulation Engine
+                    ┌──────────────────────────────────┐
+                    │         OPPONENT METRICS         │
+                    └──────────────────────────────────┘
+                                     │
+                 ┌───────────────────┴───────────────────┐
+                 │                                       │
+                 ▼                                       ▼
+    ┌────────────────────────┐            ┌────────────────────────┐
+    │    ATTACK DIFFICULTY   │            │   DEFENSE DIFFICULTY   │
+    │                        │            │                        │
+    │ How hard to score      │            │ How likely opponent    │
+    │ against this team?     │            │ will score?            │
+    │                        │            │                        │
+    │ • Goals conceded/game  │            │ • Goals scored/game    │
+    │ • xG conceded          │            │ • xG created           │
+    │ • Shots allowed        │            │ • Shot quality         │
+    │ • Home/Away split      │            │ • Home/Away split      │
+    │                        │            │                        │
+    └────────────────────────┘            └────────────────────────┘
+                 │                                       │
+                 └───────────────────┬───────────────────┘
+                                     │
+                                     ▼
+                    ┌──────────────────────────────────┐
+                    │   COMBINED FDR (1-5 scale)       │
+                    │                                  │
+                    │   1 = Very Easy (weak opponent)  │
+                    │   5 = Very Hard (top 6 away)     │
+                    │                                  │
+                    │   Weighted by recency for        │
+                    │   current team form              │
+                    └──────────────────────────────────┘
+```
 
-The Monte Carlo simulation engine samples from probability distributions to model uncertainty. Player points are modeled using a negative binomial distribution, which captures the over-dispersion typically seen in FPL points (variance exceeds the mean).
+**Multi-Gameweek Aggregation:**
+```
+    GW 20      GW 21      GW 22      GW 23      GW 24      GW 25
+    ┌────┐     ┌────┐     ┌────┐     ┌────┐     ┌────┐     ┌────┐
+    │FDR │     │FDR │     │FDR │     │FDR │     │FDR │     │FDR │
+    │ 2  │     │ 3  │     │ 2  │     │ 4  │     │ 2  │     │ 2  │
+    └────┘     └────┘     └────┘     └────┘     └────┘     └────┘
+      │          │          │          │          │          │
+      │ ×1.0     │ ×0.95    │ ×0.90    │ ×0.85    │ ×0.80    │ ×0.75
+      │          │          │          │          │          │
+      └──────────┴──────────┴──────────┴──────────┴──────────┘
+                                   │
+                                   ▼
+                    ┌──────────────────────────────────┐
+                    │   Geometric Mean with Time       │
+                    │   Discounting = 2.35 Avg FDR     │
+                    │                                  │
+                    │   (Near fixtures weighted more)  │
+                    └──────────────────────────────────┘
+```
 
-The distribution parameters are derived from:
+---
 
-- **Expected Points**: Sets the mean of the distribution.
-- **Historical Variance**: Calculated from the player's gameweek-to-gameweek volatility.
-- **Contextual Adjustments**: Higher variance for attacking players in high-scoring matches.
+## Optimization Engine
 
-Simulations are run in parallel using NumPy vectorization for efficiency. A typical 10,000-simulation run completes in under 2 seconds.
+### Integer Linear Programming Formulation
 
-### Fixture Difficulty Analysis
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         SQUAD OPTIMIZATION AS ILP                           │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-Fixture difficulty is assessed using the official FPL Fixture Difficulty Rating (FDR) as a baseline, enhanced with team strength metrics derived from historical results. The analysis considers:
+    OBJECTIVE:  Maximize  Σ (expected_points[i] × selected[i])
+                         i∈players
 
-- **Attack Strength**: Goals scored per match, adjusted for opponent quality.
-- **Defense Strength**: Goals conceded per match, adjusted for opponent quality.
-- **Home and Away Splits**: Separate calculations for home and away performance.
-- **Recent Form**: Greater weight on recent matches to capture current team quality.
+    DECISION VARIABLES:
+    
+        selected[i] ∈ {0, 1}    for each player i
+        
+        0 = not in squad
+        1 = in squad
 
-For multi-gameweek planning, fixture difficulty is aggregated and teams are ranked by the favorability of their upcoming schedule.
+    CONSTRAINTS:
+
+    ┌─────────────────────────────────────────────────────────────────────────┐
+    │                                                                         │
+    │  BUDGET         Σ (price[i] × selected[i])  ≤  100.0m                  │
+    │                i                                                        │
+    │                                                                         │
+    │  SQUAD SIZE    Σ selected[i]  =  15                                    │
+    │               i                                                         │
+    │                                                                         │
+    │  GOALKEEPERS   Σ selected[i]  =  2      (where position[i] = GKP)      │
+    │               i                                                         │
+    │                                                                         │
+    │  DEFENDERS     Σ selected[i]  =  5      (where position[i] = DEF)      │
+    │               i                                                         │
+    │                                                                         │
+    │  MIDFIELDERS   Σ selected[i]  =  5      (where position[i] = MID)      │
+    │               i                                                         │
+    │                                                                         │
+    │  FORWARDS      Σ selected[i]  =  3      (where position[i] = FWD)      │
+    │               i                                                         │
+    │                                                                         │
+    │  MAX 3/CLUB    Σ selected[i]  ≤  3      (for each of 20 clubs)         │
+    │               i∈club                                                    │
+    │                                                                         │
+    └─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Solution Space Visualization
+
+```
+    ~700 players in FPL
+         │
+         │  Select 15 players
+         │
+         ▼
+    ┌─────────────────────────────────────────────────┐
+    │                                                 │
+    │   Theoretical combinations: C(700, 15)          │
+    │                                                 │
+    │   = 10^30+ possibilities                        │
+    │                                                 │
+    │   Brute force: IMPOSSIBLE                       │
+    │                                                 │
+    └─────────────────────────────────────────────────┘
+         │
+         │  Apply ILP constraints
+         │
+         ▼
+    ┌─────────────────────────────────────────────────┐
+    │                                                 │
+    │   Constraints define a convex polytope          │
+    │                                                 │
+    │   LP relaxation + Branch & Bound                │
+    │                                                 │
+    │   Optimal solution found in < 1 second          │
+    │                                                 │
+    └─────────────────────────────────────────────────┘
+```
+
+### Transfer Planning (Multi-Period)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        ROLLING HORIZON OPTIMIZATION                         │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Current GW                    Planning Horizon (4-8 GWs)
+        │
+        ▼
+    ┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐
+    │ GW 20 │ → │ GW 21 │ → │ GW 22 │ → │ GW 23 │ → │ GW 24 │
+    │       │   │       │   │       │   │       │   │       │
+    │Squad A│   │Squad ?│   │Squad ?│   │Squad ?│   │Squad ?│
+    │       │   │       │   │       │   │       │   │       │
+    └───────┘   └───────┘   └───────┘   └───────┘   └───────┘
+        │           │           │           │           │
+        │           │           │           │           │
+        ▼           ▼           ▼           ▼           ▼
+    ┌─────────────────────────────────────────────────────────┐
+    │                                                         │
+    │   Multi-period ILP:                                     │
+    │                                                         │
+    │   Maximize: Σ (points[gw] - 4 × extra_transfers[gw])   │
+    │            gw                                           │
+    │                                                         │
+    │   Subject to:                                           │
+    │   • Squad validity each GW                              │
+    │   • Transfer continuity between GWs                     │
+    │   • Free transfer accumulation (max 2)                  │
+    │                                                         │
+    └─────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+    ┌─────────────────────────────────────────────────────────┐
+    │                                                         │
+    │   Output: Optimal transfer sequence                     │
+    │                                                         │
+    │   GW 20: Hold (bank transfer)                           │
+    │   GW 21: Salah → Saka, Watkins → Haaland (2 FT)        │
+    │   GW 22: Hold                                           │
+    │   ...                                                   │
+    │                                                         │
+    └─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Simulation Framework
+
+### Monte Carlo Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         MONTE CARLO SIMULATION ENGINE                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+                         ┌─────────────────────┐
+                         │   Squad (15 players)│
+                         │   + Captain choice  │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+    ┌─────────────────────────────────────────────────────────────────────────┐
+    │                                                                         │
+    │   FOR iteration = 1 to 10,000:                                         │
+    │                                                                         │
+    │   ┌───────────────────────────────────────────────────────────────────┐│
+    │   │                                                                   ││
+    │   │   For each player:                                                ││
+    │   │       sample points from player's distribution                    ││
+    │   │                                                                   ││
+    │   │   Apply captain multiplier (2x)                                   ││
+    │   │   Sum starting XI points                                          ││
+    │   │   Handle auto-substitutions                                       ││
+    │   │                                                                   ││
+    │   │   Record: total_points[iteration]                                 ││
+    │   │                                                                   ││
+    │   └───────────────────────────────────────────────────────────────────┘│
+    │                                                                         │
+    └─────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+    ┌─────────────────────────────────────────────────────────────────────────┐
+    │                                                                         │
+    │   AGGREGATE STATISTICS:                                                │
+    │                                                                         │
+    │   • Mean (expected points)                                             │
+    │   • Median                                                             │
+    │   • Standard deviation                                                 │
+    │   • 5th/95th percentiles (90% confidence interval)                     │
+    │   • Full histogram                                                     │
+    │                                                                         │
+    └─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Why Monte Carlo?
+
+```
+    ANALYTICAL APPROACH                    MONTE CARLO APPROACH
+    
+    Sum of 11 non-normal                   Sample directly from
+    distributions = ???                    joint distribution
+    
+    ┌─────────────────────┐               ┌─────────────────────┐
+    │                     │               │                     │
+    │  Player A: dist_A   │               │  Run 10,000 sims    │
+    │  Player B: dist_B   │               │                     │
+    │  Player C: dist_C   │   vs.         │  Each sim: sample   │
+    │     ...             │               │  all 11 players     │
+    │  Player K: dist_K   │               │                     │
+    │                     │               │  Get empirical      │
+    │  Σ = closed form?   │               │  distribution       │
+    │     INTRACTABLE     │               │     ✓ FEASIBLE      │
+    │                     │               │                     │
+    └─────────────────────┘               └─────────────────────┘
+```
+
+### Point Distribution Modeling
+
+```
+    TYPICAL FPL POINT DISTRIBUTIONS BY POSITION
+
+    GOALKEEPER                    MIDFIELDER                   FORWARD
+    
+    Points │                     Points │                     Points │
+           │                            │                            │
+    10%    │ █                   10%    │                     10%    │
+           │ ██                         │                            │
+     8%    │ ███                  8%    │                      8%    │
+           │ ████                       │                            │     █
+     6%    │ █████                6%    │    █                 6%    │    ██
+           │ ██████                     │   ██                       │   ███
+     4%    │ ███████              4%    │  ███                 4%    │  ████
+           │ ████████                   │ ████                       │ █████
+     2%    │ █████████            2%    │ █████ ██  █          2%    │ ██████ █  █  █
+           │ ██████████                 │ ███████████████            │ ████████████████
+     0%    └───────────────      0%    └───────────────────   0%    └───────────────────
+           0  2  4  6  8               0  2  4  6  8 10 12 14       0  2  4  6  8 10 12 14
+    
+    Tight around 2-6 pts         Heavy right tail              Very heavy right tail
+    (saves + CS)                 (goals/assists variance)      (goal-dependent)
+```
+
+**Distribution Choice: Negative Binomial**
+
+```
+    Why not Normal distribution?
+    
+    Normal                           Negative Binomial (actual)
+    
+         │    ╱╲                          │
+         │   ╱  ╲                         │ █
+         │  ╱    ╲                        │ ██
+         │ ╱      ╲                       │ ████
+         │╱        ╲                      │ ██████
+    ─────┴──────────────             ─────┴────────────────────
+        -2   0   2   4   6                 0   2   4   6   8  10  12
+    
+    ✗ Symmetric                      ✓ Right-skewed
+    ✗ Allows negative points         ✓ Non-negative
+    ✗ Thin tails                     ✓ Heavy tails (hauls)
+```
+
+### Performance Optimization
+
+```
+    NAIVE PYTHON                         NUMPY VECTORIZED
+    
+    for sim in range(10000):             samples = np.random.negative_binomial(
+        for player in squad:                 n=params[:, 0],
+            pts = random_sample()            p=params[:, 1],
+            total += pts                     size=(10000, 11)
+                                         )
+    Time: ~30 seconds                    total = samples.sum(axis=1)
+                                         
+                                         Time: ~0.1 seconds
+                                         
+                                         300x speedup
+```
+
+---
+
+## Frontend Architecture
+
+### Rendering Strategy
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        NEXT.JS HYBRID RENDERING                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    Initial Request
+         │
+         ▼
+    ┌─────────────────────────────────────────────────────────────────────────┐
+    │                          SERVER                                         │
+    │                                                                         │
+    │   ┌─────────────────────┐                                              │
+    │   │  Server Components  │  ← Render on server, no JS sent to client    │
+    │   │                     │                                              │
+    │   │  • Page layouts     │                                              │
+    │   │  • Data fetching    │                                              │
+    │   │  • Static content   │                                              │
+    │   └─────────────────────┘                                              │
+    │                                                                         │
+    └─────────────────────────────────────────────────────────────────────────┘
+         │
+         │  HTML + minimal JS
+         │
+         ▼
+    ┌─────────────────────────────────────────────────────────────────────────┐
+    │                          CLIENT (Browser)                               │
+    │                                                                         │
+    │   ┌─────────────────────┐                                              │
+    │   │  Client Components  │  ← Hydrate and run in browser                │
+    │   │                     │                                              │
+    │   │  • Interactive UI   │                                              │
+    │   │  • Charts (Recharts)│                                              │
+    │   │  • Filters/forms    │                                              │
+    │   │  • Real-time updates│                                              │
+    │   └─────────────────────┘                                              │
+    │                                                                         │
+    └─────────────────────────────────────────────────────────────────────────┘
+```
+
+### State Management
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         STATE MANAGEMENT PATTERN                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │                           SERVER STATE                                 │
+    │                                                                        │
+    │   Managed by: TanStack Query                                           │
+    │   Lives on: Backend API                                                │
+    │                                                                        │
+    │   • Player data           • Optimization results                       │
+    │   • Fixture lists         • Simulation outputs                         │
+    │   • League standings      • Live scores                                │
+    │                                                                        │
+    │   Features:                                                            │
+    │   ✓ Automatic caching     ✓ Background refetch                         │
+    │   ✓ Request deduplication ✓ Stale-while-revalidate                     │
+    │                                                                        │
+    └────────────────────────────────────────────────────────────────────────┘
+    
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │                            URL STATE                                   │
+    │                                                                        │
+    │   Managed by: Next.js router                                           │
+    │   Lives in: Browser URL                                                │
+    │                                                                        │
+    │   • Filters (?position=MID&minPrice=8)                                 │
+    │   • Sort order (?sort=points_desc)                                     │
+    │   • Pagination (?page=2)                                               │
+    │                                                                        │
+    │   Features:                                                            │
+    │   ✓ Bookmarkable          ✓ Back-button works                          │
+    │   ✓ Shareable links       ✓ SEO friendly                               │
+    │                                                                        │
+    └────────────────────────────────────────────────────────────────────────┘
+    
+    ┌────────────────────────────────────────────────────────────────────────┐
+    │                           LOCAL UI STATE                               │
+    │                                                                        │
+    │   Managed by: React useState                                           │
+    │   Lives in: Component memory                                           │
+    │                                                                        │
+    │   • Modal open/closed                                                  │
+    │   • Form input values                                                  │
+    │   • Hover states                                                       │
+    │                                                                        │
+    │   Features:                                                            │
+    │   ✓ Ephemeral (resets on navigate)                                     │
+    │   ✓ No sync needed                                                     │
+    │                                                                        │
+    └────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Core Features
+
+### Feature Matrix
+
+| Feature | ML Model | Optimizer | Simulator | Live Data |
+|---------|:--------:|:---------:|:---------:|:---------:|
+| Player Analysis | ✓ | | | ✓ |
+| Squad Optimizer | ✓ | ✓ | | |
+| Transfer Planner | ✓ | ✓ | | |
+| Captain Picker | ✓ | | ✓ | |
+| Gameweek Sim | ✓ | | ✓ | |
+| Live Tracking | | | | ✓ |
+| League Analysis | | | | ✓ |
+| Chip Strategy | ✓ | ✓ | ✓ | |
+| VOR Rankings | ✓ | | | |
+| Fixture Analysis | ✓ | | | |
+
+### Live Gameweek System
+
+```
+                          DURING ACTIVE MATCHES
+    
+    ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+    │   FPL API    │      │   Backend    │      │   Frontend   │
+    │   /live      │      │   Cache      │      │   Display    │
+    └──────┬───────┘      └──────┬───────┘      └──────┬───────┘
+           │                     │                     │
+           │  Poll every 60s     │                     │
+           │◄────────────────────│                     │
+           │                     │                     │
+           │  Live player data   │                     │
+           │────────────────────►│                     │
+           │                     │                     │
+           │                     │  Webhook/poll       │
+           │                     │◄────────────────────│
+           │                     │                     │
+           │                     │  Calculated scores  │
+           │                     │────────────────────►│
+           │                     │                     │
+           │                     │                     │  Update UI
+           │                     │                     │────────►
+```
+
+### Value Over Replacement (VOR)
+
+```
+    TRADITIONAL VIEW                 VOR VIEW
+    
+    "Haaland: 8 pts/game"           "Haaland VOR: 5.0"
+    "Watkins: 5 pts/game"           "Watkins VOR: 2.0"
+    
+    Looks like Haaland              But consider opportunity cost:
+    is 3 pts better                 Bench FWD averages 3 pts
+                                    
+                                    Haaland: 8 - 3 = 5 VOR
+                                    Watkins: 5 - 3 = 2 VOR
+                                    
+                                    Per-million efficiency:
+                                    Haaland (14m): 5/14 = 0.36 VOR/m
+                                    Watkins (8m):  2/8  = 0.25 VOR/m
+                                    
+                                    Haaland is more efficient!
+```
+
+---
+
+## Performance
+
+### Target Response Times
+
+| Operation | Target | Typical | Method |
+|-----------|--------|---------|--------|
+| Player list | < 200ms | ~100ms | Cached data |
+| Player detail | < 200ms | ~150ms | Cached + computed |
+| Squad optimization | < 1s | ~300ms | ILP solver |
+| Simulation (10k) | < 3s | ~1.5s | Vectorized NumPy |
+| Live scores | < 500ms | ~200ms | Short-TTL cache |
+
+### Concurrency Model
+
+```
+    Request 1 ──────────┐
+                        │
+    Request 2 ──────────┼──────►  Event Loop  ──────►  Response Queue
+                        │         (async I/O)
+    Request 3 ──────────┤
+                        │         No threads blocked
+    Request N ──────────┘         on network I/O
+    
+    
+    CPU-bound work (optimization, simulation):
+    
+    ┌─────────────┐
+    │ Concurrency │  Limits simultaneous CPU-intensive
+    │   Limiter   │  operations to prevent overload
+    └──────┬──────┘
+           │
+           ▼
+    ┌──────────────────────────────────────┐
+    │  Worker Pool (2-4 concurrent tasks)  │
+    └──────────────────────────────────────┘
+```
 
 ---
 
 ## Technology Stack
 
-### Backend Technologies
+### Backend
 
-| Technology | Purpose |
-|------------|---------|
-| Python 3.11 | Core programming language |
-| FastAPI | Async web framework for the REST API |
-| Pydantic | Data validation and settings management |
-| PuLP | Linear programming modeling and solving |
-| NumPy | Numerical computing for simulations |
-| HTTPX | Async HTTP client for FPL API requests |
-| Uvicorn | ASGI server for production deployment |
+| Technology | Purpose | Why This Choice |
+|------------|---------|-----------------|
+| **Python 3.11** | Core language | Best ML/optimization ecosystem |
+| **FastAPI** | Web framework | Native async, auto OpenAPI docs |
+| **Pydantic** | Validation | Type-safe with clear errors |
+| **PuLP + CBC** | Optimization | Fast, open-source ILP solver |
+| **NumPy** | Numerics | Vectorized simulation speed |
+| **HTTPX** | HTTP client | Async + HTTP/2 support |
+| **Uvicorn** | ASGI server | High-performance async |
 
-### Frontend Technologies
+### Frontend
 
-| Technology | Purpose |
-|------------|---------|
-| Next.js 16 | React framework with server-side rendering |
-| React 18 | UI component library |
-| TypeScript | Type-safe JavaScript |
-| Tailwind CSS | Utility-first CSS framework |
-| TanStack Query | Data fetching and state management |
-| Recharts | Charting library for visualizations |
-| Radix UI | Accessible component primitives |
-
-### Infrastructure
-
-| Service | Purpose |
-|---------|---------|
-| Render | Cloud hosting for backend and frontend |
-| GitHub | Source control and CI/CD integration |
+| Technology | Purpose | Why This Choice |
+|------------|---------|-----------------|
+| **Next.js 16** | Framework | App Router, Server Components |
+| **React 18** | UI library | Suspense, concurrent features |
+| **TypeScript** | Type safety | Catch errors at compile time |
+| **Tailwind CSS** | Styling | Utility-first, consistent design |
+| **TanStack Query** | Data fetching | Caching, deduplication, refetch |
+| **Recharts** | Charts | React-native, composable |
+| **Radix UI** | Primitives | Accessible, unstyled base |
 
 ---
 
@@ -274,155 +957,144 @@ For multi-gameweek planning, fixture difficulty is aggregated and teams are rank
 
 ### Prerequisites
 
-- Python 3.11 or higher
-- Node.js 18 or higher
-- npm or yarn package manager
+- Python 3.11+
+- Node.js 18+
+- npm or yarn
 
-### Backend Setup
+### Quick Start
 
-1. Navigate to the backend directory:
-   ```
-   cd backend
-   ```
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              BACKEND SETUP                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-2. Create and activate a virtual environment:
-   ```
-   python -m venv venv
-   venv\Scripts\activate        # Windows
-   source venv/bin/activate     # macOS/Linux
-   ```
+    1. cd backend
+    2. python -m venv venv
+    3. venv\Scripts\activate        (Windows)
+       source venv/bin/activate     (macOS/Linux)
+    4. pip install -r requirements.txt
+    5. uvicorn app.main:app --reload
+    
+    → API at http://localhost:8000
+    → Docs at http://localhost:8000/docs
 
-3. Install Python dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              FRONTEND SETUP                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-4. Start the development server:
-   ```
-   uvicorn app.main:app --reload
-   ```
-
-The API will be available at http://localhost:8000 with interactive documentation at http://localhost:8000/docs.
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
-   ```
-   cd frontend
-   ```
-
-2. Install Node.js dependencies:
-   ```
-   npm install
-   ```
-
-3. Create a local environment file:
-   ```
-   echo NEXT_PUBLIC_API_URL=http://localhost:8000 > .env.local
-   ```
-
-4. Start the development server:
-   ```
-   npm run dev
-   ```
-
-The frontend will be available at http://localhost:3000.
+    1. cd frontend
+    2. npm install
+    3. echo NEXT_PUBLIC_API_URL=http://localhost:8000 > .env.local
+    4. npm run dev
+    
+    → App at http://localhost:3000
+```
 
 ---
 
 ## API Reference
 
-### Player Endpoints
+### Endpoints Overview
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/players/ | List all players with optional filters for position, team, price range, and sorting |
-| GET | /api/players/{id} | Get detailed information for a specific player including history and fixtures |
-| GET | /api/players/{id}/history | Get a player's complete gameweek history |
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              API STRUCTURE                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-### Optimizer Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/optimizer/squad | Generate an optimal 15-player squad given budget and constraints |
-| POST | /api/optimizer/transfers | Find optimal transfers for an existing squad |
-| POST | /api/optimizer/captain | Recommend captain and vice-captain selections |
-| POST | /api/optimizer/starting-xi | Select optimal starting XI from a 15-player squad |
-
-### Simulation Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | /api/simulation/gameweek | Run Monte Carlo simulation for a squad's gameweek performance |
-| POST | /api/simulation/what-if | Analyze alternative decisions against actual outcomes |
-| POST | /api/simulation/season-projection | Project end-of-season points and rank |
-
-### Live Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/live/gameweek | Get current gameweek information |
-| GET | /api/live/gameweek/{gw}/scores | Get live scores for a specific gameweek |
-| GET | /api/live/gameweek/{gw}/fixtures | Get fixture status and results |
-| GET | /api/live/manager/{id} | Get manager details and current squad |
-
-### League Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/leagues/{id} | Get league information and current standings |
-
-### Analytics Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /api/analytics/vor-rankings | Get Value Over Replacement rankings by position |
-| GET | /api/analytics/fixtures/analysis | Get fixture difficulty analysis for upcoming gameweeks |
-| GET | /api/analytics/differentials | Find captain differential opportunities |
-| GET | /api/analytics/match-predictions | Get probabilistic match predictions |
-| POST | /api/analytics/chip-strategy | Get chip usage recommendations |
+    /api
+    ├── /players
+    │   ├── GET  /                    List all players (filterable)
+    │   ├── GET  /{id}                Player details + fixtures
+    │   └── GET  /{id}/history        Full gameweek history
+    │
+    ├── /optimizer
+    │   ├── POST /squad               Optimal 15-player squad
+    │   ├── POST /transfers           Best transfers for existing squad
+    │   ├── POST /captain             Captain recommendation
+    │   └── POST /starting-xi         Optimal starting XI + formation
+    │
+    ├── /simulation
+    │   ├── POST /gameweek            Monte Carlo GW simulation
+    │   ├── POST /what-if             Alternative decision analysis
+    │   └── POST /season-projection   End-of-season projection
+    │
+    ├── /live
+    │   ├── GET  /gameweek            Current GW info
+    │   ├── GET  /gameweek/{gw}/scores Live scores
+    │   ├── GET  /gameweek/{gw}/fixtures Fixture status
+    │   └── GET  /manager/{id}        Manager squad
+    │
+    ├── /leagues
+    │   └── GET  /{id}                League standings
+    │
+    └── /analytics
+        ├── GET  /vor-rankings        Value Over Replacement
+        ├── GET  /fixtures/analysis   Fixture difficulty
+        ├── GET  /differentials       Captain differentials
+        ├── GET  /match-predictions   Match outcome probabilities
+        └── POST /chip-strategy       Chip timing recommendation
+```
 
 ---
 
 ## Deployment
 
-The application is deployed on Render with the following configuration:
+### Architecture on Render
 
-### Backend Service
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           RENDER DEPLOYMENT                                 │
+└─────────────────────────────────────────────────────────────────────────────┘
 
-- **Type**: Web Service
-- **Runtime**: Python 3.11
-- **Build Command**: pip install -r requirements.txt
-- **Start Command**: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+                              ┌───────────────┐
+                              │   Internet    │
+                              └───────┬───────┘
+                                      │
+                    ┌─────────────────┴─────────────────┐
+                    │                                   │
+                    ▼                                   ▼
+           ┌────────────────┐                 ┌────────────────┐
+           │                │                 │                │
+           │   Frontend     │                 │   Backend      │
+           │   Service      │                 │   Service      │
+           │                │                 │                │
+           │   Next.js      │ ───────────────►│   FastAPI      │
+           │   Node.js      │    REST API     │   Python 3.11  │
+           │                │                 │                │
+           └────────────────┘                 └────────────────┘
+                    │                                   │
+                    │                                   │
+                    ▼                                   ▼
+           ┌────────────────┐                 ┌────────────────┐
+           │   Render CDN   │                 │   FPL API      │
+           │   (static)     │                 │   (external)   │
+           └────────────────┘                 └────────────────┘
 
-### Frontend Service
-
-- **Type**: Web Service
-- **Runtime**: Node.js
-- **Build Command**: npm install && npm run build
-- **Start Command**: npm start
-
-Environment variables required for production:
-
-- **Backend**: PYTHONPATH set to the backend directory
-- **Frontend**: NEXT_PUBLIC_API_URL set to the backend service URL
+    Environment Variables:
+    
+    Frontend:
+    └── NEXT_PUBLIC_API_URL = https://backend.onrender.com
+    
+    Backend:
+    └── PYTHONPATH = /app
+```
 
 ---
 
 ## License
 
-This project is released under the MIT License. You are free to use, modify, and distribute the code for personal or commercial purposes.
+MIT License - free for personal and commercial use.
 
 ---
 
 ## Disclaimer
 
-This tool is intended for educational and entertainment purposes. Fantasy Premier League outcomes are inherently unpredictable, and no model can guarantee success. The predictions and recommendations provided by this platform should be used as one input among many when making FPL decisions. Past performance of players or the model does not guarantee future results.
+This tool is for educational and entertainment purposes. FPL outcomes are inherently unpredictable. Use predictions as one input among many. Past performance does not guarantee future results.
 
 ---
 
 ## Acknowledgments
 
-- Fantasy Premier League for providing the public API that makes this analysis possible
-- The open-source community for the excellent libraries that power this application
-- The FPL community for the discussions
+- Fantasy Premier League for the public API
+- Open-source community for the excellent libraries
+- FPL community for insights and discussions
